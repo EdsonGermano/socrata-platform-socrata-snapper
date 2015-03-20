@@ -1,0 +1,16 @@
+source 'https://rubygems.org'
+
+group :development do
+  gem 'pry'
+  gem 'pry-nav'
+  gem 'pry-stack_explorer'
+end
+
+group :test do
+  gem 'rspec', '>= 3.2.0'
+  gem 'webmock'
+  gem 'simplecov', '>= 0.9'
+end
+
+# Specify your gem's dependencies in core-auth-ruby.gemspec
+gemspec

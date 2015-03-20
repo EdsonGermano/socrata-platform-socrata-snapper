@@ -1,0 +1,12 @@
+E, [2015-03-19T12:56:47.529185 #93217] ERROR -- : Error opening browser.
+E, [2015-03-19T12:58:12.185414 #93265] ERROR -- : Error opening browser.
+E, [2015-03-19T15:34:06.032066 #97423] ERROR -- : Error opening browser.
+E, [2015-03-19T15:37:07.032247 #97423] ERROR -- : Error opening browser.
+E, [2015-03-19T15:42:37.343824 #97620] ERROR -- : Error opening browser for page http://www.rebelscum.com.
+E, [2015-03-19T15:43:11.825006 #97657] ERROR -- : Error opening browser for page http://www.rebelscum.com.
+E, [2015-03-19T15:46:36.729452 #97754] ERROR -- : Error opening browser for page http://www.rebelscum.com. Message window.JSErrorCollector_errors is undefined
+E, [2015-03-19T15:53:28.073799 #97949] ERROR -- : Error opening browser for page http://www.rebelscum.com. Message window.JSErrorCollector_errors is undefined
+E, [2015-03-19T15:56:32.155808 #98036] ERROR -- : Error opening browser for page http://www.rebelscum.com. Message undefined method `any?' for "":String
+E, [2015-03-19T16:04:51.209382 #98220] ERROR -- : Error opening browser for page http://www.rebelscum.com. Message undefined method `any?' for "":String
+E, [2015-03-19T16:05:26.995160 #98220] ERROR -- : Error opening browser for page http://www.rebelscum.com. Message undefined method `any?' for "":String
+I, [2015-03-19T16:05:43.083961 #98266]  INFO -- : No errors detected on http://www.rebelscum.com
