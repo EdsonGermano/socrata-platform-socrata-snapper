@@ -35,10 +35,6 @@ Operation possibilities
 10.) navigate to two sites, login, compare, produce diff and check for javascript and page errors
     <script> -s domain:4x4 -d domain:4x4  -u <username> -p <password> -c -j -p [-l <logdirectory>] [-o <logfilename>]
 
-
-#ruby snapper-caller.rb -s azure_rc:opendata-demo.test-socrata.com -d azure_staging:opendata-demo.test-socrata.com -u joe.nunnelley@socrata.com -p Und3rd0g -l logs -o snappit.png
-#ruby snapper-caller.rb -s azure_rc:opendata-demo.test-socrata.com -4 b7hm-7vvu -d azure_staging:opendata-demo.test-socrata.com -u joe.nunnelley@socrata.com -p Und3rd0g -l logs -o snappit.png
-
 order of operations
 
   1.) goto site
@@ -47,7 +43,6 @@ order of operations
   4.) snapshot the page and save it
   5.) check for javascript errors if requested
   6.) check for pageload errors if requested
-
 
 
 Snaps to take
