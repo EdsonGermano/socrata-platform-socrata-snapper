@@ -12,9 +12,16 @@ class Snapper
   @sites = []
 
   # initialize the class
-  def initialize(_sites)
+  def initialize(_sites=nil)
     @sites = _sites
     puts("sites length: #{@sites.length}")
+  end
+
+  def snap_shot
+    @sites.each do |site|
+      puts("Snapshoting: #{site.current_url}")
+      site.take_and_archive_snapshot
+    end
   end
 
   def process_sites
@@ -65,7 +72,7 @@ class Snapper
         return 0 #fail
       end
     else
-      puts("too many sites to compare. can only compare two sites at a time.")
+      puts("Invalid number of sites")
       return 2 #not tested
     end
   end
@@ -89,9 +96,9 @@ class Site
 
     @domain       = _domain
     @driver       = Selenium::WebDriver.for :firefox, :profile => profile
-    @password     = _password
-    @routes       = _routes.split(':')
-    @user         = _user
+    @password     = _password.nil? ? "" : _password
+    @routes       = _routes.nil? ? "" : _routes.split(':')
+    @user         = _user.nil? ? "" : _user
     @working_dir  = Dir.pwd
     @_4x4         = _4x4
     @data_lens    = ''
@@ -232,19 +239,41 @@ class Site
     # sign in if required
     if !@user.empty? && !@password.empty?
       sign_in
+    else
+      puts("Not logging in. No Username or Password provided")
     end
 
-    puts("Routes: #{@routes.count}")
     # visit each route, taking snapshots
     @routes.each do |route|
       navigate_to(route)
+      check_for_javascript_errors
       snap(route, @_4x4)
     end
 
     @current_url = get_nbe_datalens_url_from_obe
-    navigate_to(@current_url, true)
-    snap("data_lens", @_4x4)
 
+    if !@current_url.nil? && !@current_url.empty?
+      navigate_to(@current_url, true)
+      check_for_javascript_errors
+      snap("data_lens", @_4x4)
+    else
+      puts("No NBE site located for this OBE source")
+    end
+    @driver.close
+  end
+
+  def take_and_archive_snapshot
+    target_url = @current_url
+    # sign in if required
+    if !@user.empty? && !@password.empty?
+      sign_in
+    end
+
+    @current_url = target_url
+    navigate_to(@current_url, true)
+
+    check_for_javascript_errors
+    snap("#{@domain}_snap", @_4x4)
     @driver.close
   end
 
@@ -275,7 +304,7 @@ class Site
       element = @driver.find_element(:name, 'commit')
       element.click
       sleep(@wait)
-
+      check_for_javascript_errors
       @current_url = @driver.current_url
       puts("Now On #{@driver.current_url}")
       snap("dataset", @_4x4)

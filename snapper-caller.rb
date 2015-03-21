@@ -10,6 +10,10 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = "Usage: <script.rb> [options]"
 
+  opts.on('-m', '--mode MODE', 'The operation to execute') do |mode|
+    options[:mode] = mode
+  end
+
   opts.on('-s', '--site1 SITE_1:4x4', 'The site to get snaps from') do |site_1|
     elements = site_1.split(":", 2)
     options[:site_1] = elements[0]
@@ -34,14 +38,6 @@ OptionParser.new do |opts|
     options[:password] = password
   end
 
-  opts.on('-l', '--log_dir LOGDIR', 'The directory to write files to') do |log_dir|
-    options[:log_dir] = log_dir
-  end
-
-  opts.on('-j', '--javascript JAVASCRIPT', 'check the site for javascript errors') do |javascript|
-    options[:javascript_check] = javascript
-  end
-
   opts.on('-h', '--help', 'Display Help') do
     puts(opts)
     exit
@@ -49,9 +45,19 @@ OptionParser.new do |opts|
 end.parse!
 
 siteArray ||= []
-siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:routes])
-siteArray << Site.new(options[:site_2], options[:_4x4_2], options[:user], options[:password], options[:routes])
 
-snapper = Snapper.new(siteArray)
+if options[:mode] == 'snap'
+  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route])
+  snapper = Snapper.new(siteArray)
+  snapper.snap_shot
 
-snapper.process_sites
+elsif options[:mode] == 'diff'
+  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:routes])
+  siteArray << Site.new(options[:site_2], options[:_4x4_2], options[:user], options[:password], options[:routes])
+  snapper = Snapper.new(siteArray)
+  snapper.process_sites
+
+else
+  puts("Invalid request.")
+  puts(opts)
+end
