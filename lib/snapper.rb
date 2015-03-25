@@ -9,10 +9,10 @@ require 'selenium-webdriver'
 class Snapper
   attr_accessor :sites
   HTTPS = "https://"
-  @sites = []
+  @sites
 
   # initialize the class
-  def initialize(_sites=nil)
+  def initialize(_sites=[])
     @sites = _sites
     puts("sites length: #{@sites.length}")
   end
@@ -30,53 +30,68 @@ class Snapper
     end
 
     if @sites.length == 2
-      result = @sites[0].compare_to(@sites[1])
-      @sites[0].build_report(@sites[1])
-      @sites[1].build_report(@sites[0])
-
-      # build comparison html
-      head = "<html>
-      <head>
-        <style>
-          body {background-color:white}
-          h1   {color:black}
-          h2   {color:blue}
-          h3   {color:blue}
-          h4   {color:blue}
-          p    {color:green}
-          td   {color:blue}
-        </style>
-      </head>
-      <body>
-      <h1 align=center>Snap Comparisons: #{@sites[0].log_dir}</h1>"
-      body =
-        @sites[0].body_files <<
-        "<H4 align='center'>Javascript Error Messages</H4><table align='center' width=975><table border=2 align='center' width=975>" <<
-        @sites[0].body_messages <<
-        @sites[1].body_messages <<
-        "</table><br>"
-      tail =   "</body></html>"
-
-      doc = "#{head}#{body}#{tail}"
-      File.open("#{@sites[0].log_dir}/snap_comparison.html", 'w') do |f1|
-        f1.puts(doc)
-      end
-
-      puts("report: #{@sites[0].log_dir}/snap_comparison.html")
-
-      if result == true
-        puts("the sites are the same")
-        return 1 #pass
+      if compare_sites
+        puts("Comparison of images showed a match")
+        return true
       else
-        puts("the sites are not the same")
-        return 0 #fail
+        puts("Comparison of images showed a mismatch")
+        return false
       end
     else
-      puts("Invalid number of sites")
-      return 2 #not tested
+      puts("Skipping snapshot comparison. Incorrect number of sites.")
+    end
+  end
+
+private
+
+  def compare_sites
+    result = @sites[0].compare_to(@sites[1])
+    @sites[0].build_report(@sites[1])
+    @sites[1].build_report(@sites[0])
+
+    # build comparison html
+    head = "<html>
+    <head>
+      <style>
+        body {background-color:white}
+        h1   {color:black}
+        h2   {color:blue}
+        h3   {color:blue}
+        h4   {color:blue}
+        p    {color:green}
+        td   {color:blue}
+      </style>
+    </head>
+    <body>
+    <h1 align=center>Snap Comparisons: #{@sites[0].log_dir}</h1>"
+
+    body =
+      @sites[0].body_files <<
+      "<H4 align='center'>Javascript Error Messages</H4><table align='center' width=975><table border=2 align='center' width=975>" <<
+      @sites[0].body_messages <<
+      @sites[1].body_messages <<
+      "</table><br>"
+
+    tail =   "</body></html>"
+
+    doc = "#{head}#{body}#{tail}"
+
+    File.open("#{@sites[0].log_dir}/snap_comparison.html", 'w') do |f1|
+      f1.puts(doc)
+    end
+
+    puts("report: #{@sites[0].log_dir}/snap_comparison.html")
+
+    if result == true
+      puts("the sites are the same")
+      return result #pass
+    else
+      puts("the sites are not the same")
+      return result #fail
     end
   end
 end
+
 
 class Site
   attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages
@@ -96,12 +111,12 @@ class Site
 
     @domain       = _domain
     @driver       = Selenium::WebDriver.for :firefox, :profile => profile
-    @password     = _password.nil? ? "" : _password
+    @password     = _password
     @routes       = _routes.nil? ? "" : _routes.split(':')
-    @user         = _user.nil? ? "" : _user
+    @user         = _user
     @working_dir  = Dir.pwd
     @_4x4         = _4x4
-    @data_lens    = ''
+    @data_lens
     @log_dir      = "logs"
     @wait         = 5
     @current_url  = "#{HTTPS}#{@domain}/d/#{@_4x4}"
@@ -124,17 +139,18 @@ class Site
         diff_file = (!@diff_files[key].empty?) ? "#{@diff_files[key]}" : "res/not_awesome.png"
       end
 
-      @body_files   << "<br>"
-      @body_files   << "<h3 align='center'>Domain: <a href='https://#{@domain}'>#{@domain}</a>"
-      @body_files   << "<h3 align='center'>File: <a href='../#{site1_file}'>#{site1_file}</a> compared with <a href='../#{site2_file}'>#{site2_file}</a></h3>"
-      @body_files   << "<table border=2 width='900' align='center'>"
-      @body_files   << "<tr>"
-      @body_files   << "<td><a href='../#{site1_file}'><img src='../#{site1_file}' alt='#{site1_file}' width='300'></a></td>"
-      @body_files   << "<td><a href='../#{site2_file}'><img src='../#{site2_file}' alt='#{site2_file}' width='300'></a></td>"
-      @body_files   << "<td><a href='../#{diff_file}'><img src='../#{diff_file}' alt='#{diff_file}' width='300'></a></td>"
-      @body_files   << "</table>"
-      @body_files   << "<br>"
-      @body_files   << ""
+      @body_files   << [
+        "<br>",
+        "<h3 align='center'>Domain: <a href='https://#{@domain}'>#{@domain}</a>",
+        "<h3 align='center'>File: <a href='../#{site1_file}'>#{site1_file}</a> compared with <a href='../#{site2_file}'>#{site2_file}</a></h3>",
+        "<table border=2 width='900' align='center'>",
+        "<tr>",
+        "<td><a href='../#{site1_file}'><img src='../#{site1_file}' alt='#{site1_file}' width='300'></a></td>",
+        "<td><a href='../#{site2_file}'><img src='../#{site2_file}' alt='#{site2_file}' width='300'></a></td>",
+        "<td><a href='../#{diff_file}'><img src='../#{diff_file}' alt='#{diff_file}' width='300'></a></td>",
+        "</table>",
+        "<br>"
+      ].join('')
     end
 
     if(!@processing_messages.nil?)
@@ -150,68 +166,25 @@ class Site
     end
   end
 
-  # check a page for javascript errors
-  def check_for_javascript_errors
-    @processing_messages[@current_url] = ""
-    errors = ErrorCheck.new()
-    if errors.javascript_errors(@current_url, @log_dir, @driver)
-      if(!errors.results.nil?)
-        puts("Message count: #{errors.results.count}")
-        @processing_messages[@current_url] = errors.results.join(" ")
-        return true
-      end
-    else
-        return false
-    end
-  end
-
   # function to compare this site snapshots with another
   def compare_to(site_2)
-    matching = true
+    matching = []
 
     self.snap_files.each do |key, value|
       if site_2.snap_files.has_key?(key)
         value2 = site_2.snap_files[key]
         puts("Comparing: #{key} route of #{value} => #{value2}")
-        matching |= compare_snapshots(key, value, value2)
+        matching << compare_snapshots(key, value, value2)
       else
         puts("Snap route lists don't match. Missing #{key}")
-        matching |= false
+        matching << false
       end
     end
-    return matching
-  end
 
-  # compare an image with the current image name
-  def compare_snapshots(route, image_1, image_2)
-    if(image_1 == image_2)
-      puts("These are the same image. Skipping comparison")
-      @diff_files = {route => "res/awesome.png"}
-      true
+    if matching.include? false
+      return false
     else
-      compare = ImageComparison.new(route, image_1, image_2, @log_dir)
-
-      if compare.image_dimensions_match?
-        puts("Image dimensions match")
-        if compare.detailed_compare_images == 1
-          @diff_files[route] = "res/awesome.png"
-        else
-          @diff_files[route] = compare.diff_img
-        end
-      else
-        puts("Image dimensions DON'T match")
-        @diff_files[route] = "res/not_awesome.png"
-      end
-    end
-  end
-
-  # get the nbe datalens url & 4x4 from obe 4x4
-  def get_nbe_datalens_url_from_obe
-    begin
-      pf = PageFinder.new(@domain, @user, @password, false)
-      @data_lens = pf.get_nbe_page(@current_url, @_4x4)
-    rescue => why
-      puts("An error occured while looking for a NBE datalens URL. Message: #{why.message}")
+      return true
     end
   end
 
@@ -237,17 +210,21 @@ class Site
   # function which visits all site routes taking snapshots and collecting data
   def process_site
     # sign in if required
-    if !@user.empty? && !@password.empty?
+    if !@user.nil? && !@password.nil?
       sign_in
     else
       puts("Not logging in. No Username or Password provided")
     end
 
     # visit each route, taking snapshots
-    @routes.each do |route|
-      navigate_to(route)
-      check_for_javascript_errors
-      snap(route, @_4x4)
+    if @routes.nil? || @routes.empty?
+      puts("No routes defined for naviation")
+    else
+      @routes.each do |route|
+        navigate_to(route)
+        check_for_javascript_errors
+        snap(route, @_4x4)
+      end
     end
 
     @current_url = get_nbe_datalens_url_from_obe
@@ -265,7 +242,7 @@ class Site
   def take_and_archive_snapshot
     target_url = @current_url
     # sign in if required
-    if !@user.empty? && !@password.empty?
+    if !@user.nil? && !@password.nil?
       sign_in
     end
 
@@ -276,6 +253,8 @@ class Site
     snap("#{@domain}_snap", @_4x4)
     @driver.close
   end
+
+private
 
   # sign in to the login page for a domain
   def sign_in
@@ -331,5 +310,56 @@ class Site
 
     puts("finished. snap_file count: #{@snap_files.length}")
     return @current_url
+  end
+
+  # compare an image with the current image name
+  def compare_snapshots(route, image_1, image_2)
+    if(image_1 == image_2)
+      puts("These are the same image. Skipping comparison")
+      @diff_files = {route => "res/awesome.png"}
+      return true
+    else
+      compare = ImageComparison.new(route, image_1, image_2, @log_dir)
+
+      if compare.image_dimensions_match?
+        puts("Image dimensions match")
+        if compare.detailed_compare_images == 1
+          @diff_files[route] = "res/awesome.png"
+          return true
+        else
+          @diff_files[route] = compare.diff_img
+          return false
+        end
+      else
+        puts("Image dimensions DON'T match")
+        @diff_files[route] = "res/not_awesome.png"
+        return false
+      end
+    end
+  end
+
+  # get the nbe datalens url & 4x4 from obe 4x4
+  def get_nbe_datalens_url_from_obe
+    begin
+      pf = PageFinder.new(@domain, @user, @password, false)
+      @data_lens = pf.get_nbe_page(@current_url, @_4x4)
+    rescue => why
+      puts("An error occured while looking for a NBE datalens URL. Message: #{why.message}")
+    end
+  end
+
+  # check a page for javascript errors
+  def check_for_javascript_errors
+    @processing_messages[@current_url] = ""
+    errors = ErrorCheck.new()
+    if errors.javascript_errors(@current_url, @log_dir, @driver)
+      if !errors.results.nil?
+        puts("Message count: #{errors.results.count}")
+        @processing_messages[@current_url] = errors.results.join(" ")
+        return true
+      end
+    else
+      return false
+    end
   end
 end

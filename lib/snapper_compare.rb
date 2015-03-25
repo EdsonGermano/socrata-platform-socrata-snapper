@@ -17,11 +17,6 @@ class ImageComparison
     @max_height = 0
   end
 
-  def compound_log(message)
-      @verdict << message
-      puts(message)
-  end
-
   # function to check if the two images have the same dimensions
   def image_dimensions_match?
     @images_match = false
@@ -117,9 +112,10 @@ class ImageComparison
     end
   end
 
-  def print_processing_log
-    @verdict.each do |message|
+private
+
+  def compound_log(message)
+      @verdict << message
       puts(message)
-    end
   end
 end

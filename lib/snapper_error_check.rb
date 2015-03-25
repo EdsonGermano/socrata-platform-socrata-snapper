@@ -11,14 +11,6 @@ class ErrorCheck
   def initialize()
   end
 
-  def compound_log(message)
-    if @result.nil?
-      @result = Array.new
-    end
-    @result << message.nil? ? "" : message
-    puts(message)
-  end
-
   def javascript_errors(page, log_path, browser=nil)
     errors_found = 0
     errors = ""
@@ -88,5 +80,15 @@ class ErrorCheck
     end
 
     return errors_found
+  end
+
+private
+
+  def compound_log(message)
+    if @result.nil?
+      @result = Array.new
+    end
+    @result << message.nil? ? "" : message
+    puts(message)
   end
 end
