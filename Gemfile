@@ -7,4 +7,4 @@ gem 'httparty'
 gem 'phantomjs'
 
 # required to vendor because this gem is not publicly accessible and should not be for the foreseable future
-gem 'core-auth-ruby', '~> 0.2.0', path: 'vendor/gems/core-auth-ruby-0.2.0'
+gem 'core-auth-ruby', '~> 0.2.0', git: 'git@github.com:socrata/core-auth-ruby' 
