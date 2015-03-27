@@ -1,7 +1,7 @@
 # includes
-require 'snapper_compare'
-require 'snapper_error_check'
-require 'snapper_page_finder'
+require_relative 'snapper_compare'
+require_relative 'snapper_error_check'
+require_relative 'snapper_page_finder'
 require 'fileutils'
 require 'nokogiri'
 require 'selenium-webdriver'

@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 
-$:.unshift(File.expand_path(File.dirname(__FILE__), 'lib'))
+# $:.unshift(File.expand_path(File.dirname(__FILE__), 'lib'))
 
 require 'optparse'
-require 'snapper'
-require 'site'
+require_relative 'lib/snapper'
+require_relative 'lib/site'
 
 options = {}
 
