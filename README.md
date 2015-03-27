@@ -7,19 +7,19 @@ The tool has the ability to navigate to, sign-in (in the case of Socrata sites) 
 ### Operations possibilities:
 * navigate to a site and snap a picture
 ```bash
-$ ruby snapper-caller.rb -m snap -s domain:4x4
+$ ./snapper-caller.rb -m snap -s domain:4x4
 ```
 * navigato to an obe site, login and snap a picture
 ```bash
-$ ruby snapper-caller.rb -m snap -s domain:4x4 -u <username> -p <password>
+$ ./snapper-caller.rb -m snap -s domain:4x4 -u <username> -p <password>
 ```
 * navigate to two sites, compare and produce a diff of them.
 ```bash
-$ ruby snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4
+$ ./snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4
 ```
 * navigate to two sites, login, compare and produce a diff of them.
 ```bash
-$ ruby snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4  -u <username> -p <password>
+$ ./snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4  -u <username> -p <password>
 ```
 
 ### order of operations
@@ -33,3 +33,6 @@ $ ruby snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4  -u <username> -p <
 ### TODO:
 * example of using tool to take diffs
 * clarify requirements (do we need a page?)
+* my browsers are opening at different sizes... why?
+* how do you make it take a picture of the a page of 2 datasests?
+*
