@@ -1,4 +1,5 @@
 require 'chunky_png'
+
 include ChunkyPNG::Color
 
 # class for comparing png files.
@@ -49,11 +50,14 @@ class ImageComparison
         diff << [x,y] unless pixel == @images.last[x,y]
       end
     end
-    puts('done')
+
+    percentage_change = (diff.length.to_f / @images.first.pixels.length.to_f) * 100
+
+    puts('##########################')
     compound_log("pixels (total):     #{@images.first.pixels.length}")
     compound_log("pixels changed      #{diff.length}")
-    percentage_change = (diff.length.to_f / @images.first.pixels.length.to_f) * 100
     compound_log("pixels changed (%): #{percentage_change}%")
+    puts('##########################')
 
     x, y = diff.map{ |xy| xy[0] }, diff.map{ |xy| xy[1] }
 
@@ -93,12 +97,14 @@ class ImageComparison
       end
     end
 
-    puts('done')
+    pixel_diff_count  = diff.inject {|sum, value| sum + value}
+    percentage_change = (pixel_diff_count.to_f / @images.first.pixels.length.to_f) * 100
+
+    puts('##########################')
     compound_log("pixels (total):     #{@images.first.pixels.length}")
     compound_log("pixels changed:     #{diff.length}")
-    pixel_diff_count = diff.inject {|sum, value| sum + value}
-    percentage_change = (pixel_diff_count.to_f / @images.first.pixels.length.to_f) * 100
     compound_log("image changed (%):  #{percentage_change}%")
+    puts('##########################')
 
     puts("Writing diff file: #{@diff_img}")
     output_temp.save("#{@diff_img}")

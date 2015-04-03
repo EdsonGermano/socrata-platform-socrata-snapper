@@ -1,7 +1,3 @@
-#!/usr/bin/env ruby
-
-# $:.unshift(File.expand_path(File.dirname(__FILE__), 'lib'))
-
 require 'optparse'
 require_relative 'lib/snapper'
 require_relative 'lib/site'
@@ -39,6 +35,10 @@ OptionParser.new do |opts|
     options[:password] = password
   end
 
+  opts.on('-o', '--override', 'Override the URL for the sit and use a full URL') do |override|
+    options[:override] = true
+  end
+
   opts.on('-h', '--help', 'Display Help') do
     puts(opts)
     exit
@@ -49,6 +49,12 @@ siteArray ||= []
 
 if options[:mode] == 'snap'
   siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route])
+
+  if !options[:override].nil?
+    puts("page: #{options[:site_1]}")
+    siteArray[0].current_url = "https://#{options[:site_1]}"
+  end
+
   snapper = Snapper.new(siteArray)
   snapper.snap_shot
 

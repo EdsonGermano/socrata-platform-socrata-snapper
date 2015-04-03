@@ -1,7 +1,7 @@
+require 'logger'
+require 'httparty'
 require 'phantomjs'
 require 'selenium-webdriver'
-#require 'watir-webdriver'
-require 'logger'
 
 # Module to do error checking (javascript errors return code errors)
 class ErrorCheck
@@ -11,36 +11,32 @@ class ErrorCheck
   def initialize()
   end
 
-  def javascript_errors(page, log_path, browser=nil)
+  # check if a page contains javascript errors.
+  # load the page in a browser webdriver with a error collector
+  # profile extension
+  def javascript_errors(page, log_path="logs")
     errors_found = 0
     errors = ""
-    contained = false
 
     if !Dir.exists?(log_path)
       Dir.mkdir(log_path)
     end
 
     puts("Looking for javascript errors on: #{page}")
-    file = File.open("#{log_path}/javascript_errors.log", "w")
+    file = File.open("#{log_path}/javascript_errors.log", "a")
     log = Logger.new(file)
 
-    if browser.nil?
-      profile = Selenium::WebDriver::Firefox::Profile.new
-      contained = true
-      begin
-        profile.add_extension("res", "JSErrorCollector.xpi")
-        puts("JSErrorCollected loaded")
-      rescue => why
-        puts("1")
-        compound_log("JSErrorCollector failed to load")
-        puts("2")
-        compound_log("ERROR: #{why.message}")
-        puts("3")
-      end
+    profile = Selenium::WebDriver::Firefox::Profile.new
 
-      browser = Selenium::WebDriver.for :firefox, :profile => profile
+    begin
+      profile.add_extension("res", "JSErrorCollector.xpi")
+      puts("JSErrorCollected loaded")
+    rescue => why
+      compound_log("JSErrorCollector failed to load")
+      compound_log("ERROR: #{why.message}")
     end
 
+    browser = Selenium::WebDriver.for :firefox, :profile => profile
     browser.navigate.to(page)
 
     begin
@@ -73,17 +69,45 @@ class ErrorCheck
     ensure
       file.close
       log.close
-
-      if contained  #need to close if this was not a browser object passed in
-        browser.close
-      end
+      browser.close
     end
 
     return errors_found
   end
 
-private
+  # check the return code of a particular site.
+  # return true if 200, false otherwise
+  def page_errors?(page, log_path="logs")
+    response_error = false
 
+    if !Dir.exists?(log_path)
+      Dir.mkdir(log_path)
+    end
+
+    puts("Looking for page errors on #{page}")
+    file = File.open("#{log_path}/page_errors.log", "a")
+    log = Logger.new(file)
+
+    begin
+      # use httparty
+      response = HTTParty.get(page)
+
+      if response.header.to_s.include? 'HTTPOK'
+        puts("Valid response. OK")
+      else
+        puts("Invalid response. #{response.header}")
+        response_error = true
+      end
+    rescue => why
+      puts("Error response encountered\n#{why.message}")
+      response_error = true
+    end
+
+    return response_error
+  end
+
+private
+  # logging redirect to a message array for later flushing and to console.
   def compound_log(message)
     if @result.nil?
       @result = Array.new

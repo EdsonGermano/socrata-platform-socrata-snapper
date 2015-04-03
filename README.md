@@ -9,6 +9,11 @@ The tool has the ability to navigate to, sign-in (in the case of Socrata sites) 
 ```bash
 $ ./snapper-caller.rb -m snap -s domain:4x4
 ```
+* navigate to a site directly and snap a picture
+```bash
+$ ./snapper-caller.rb -m snap -s bar_url -o true 
+$ note: bare_url = https://<some_url> without the https://
+
 * navigato to an obe site, login and snap a picture
 ```bash
 $ ./snapper-caller.rb -m snap -s domain:4x4 -u <username> -p <password>
