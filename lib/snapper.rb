@@ -5,6 +5,7 @@ require_relative 'snapper_compare'
 require_relative 'snapper_error_check'
 require_relative 'snapper_page_finder'
 
+# Class that drives the processing of commands to the library
 class Snapper
   attr_accessor :sites
   HTTPS = "https://"

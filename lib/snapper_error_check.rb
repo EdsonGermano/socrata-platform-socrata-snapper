@@ -3,7 +3,7 @@ require 'httparty'
 require 'phantomjs'
 require 'selenium-webdriver'
 
-# Module to do error checking (javascript errors return code errors)
+# Class that contains error checking routines
 class ErrorCheck
   attr_accessor :browser, :results
   @results = []

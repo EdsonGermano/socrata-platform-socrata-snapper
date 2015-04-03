@@ -2,7 +2,7 @@ require 'chunky_png'
 
 include ChunkyPNG::Color
 
-# class for comparing png files.
+# class for comparing png files.Comparison is limited two between 2 files at a time.
 class ImageComparison
   attr_accessor :images, :verdict, :diff_img, :max_width, :max_height
 

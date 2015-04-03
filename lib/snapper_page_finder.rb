@@ -3,7 +3,7 @@ require 'httparty'
 require 'json'
 require 'uri'
 
-# class to query find the nbe id from an obe id
+# Class to query an obe site and find the nbe details related to it
 class PageFinder
   attr_accessor :domain, :email, :password, :auth
   HTTPS = "https://"

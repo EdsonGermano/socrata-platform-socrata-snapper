@@ -5,6 +5,7 @@ require_relative 'snapper_compare'
 require_relative 'snapper_error_check'
 require_relative 'snapper_page_finder'
 
+# The site class which manages all interactions with a particular website
 class Site
   attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages
   HTTPS       = "https://"
