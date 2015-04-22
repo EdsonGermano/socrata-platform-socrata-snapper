@@ -35,8 +35,12 @@ OptionParser.new do |opts|
     options[:password] = password
   end
 
-  opts.on('-o', '--override', 'Override the URL for the site and use a full URL') do |override|
+  opts.on('-o', '--override', 'Override the URL for the site and use a full URL to take a snapshot') do |override|
     options[:override] = true
+  end
+
+  opts.on('-i', '--insecure_url', 'Use http rather than https for the URL to take a snapshot') do |insecure_url|
+    options[:insecure_url] = true
   end
 
   opts.on('-h', '--help', 'Display Help') do
@@ -52,7 +56,12 @@ if options[:mode] == 'snap'
 
   if !options[:override].nil?
     puts("page: #{options[:site_1]}")
-    siteArray[0].current_url = "https://#{options[:site_1]}"
+
+    if !options[:insecure_url].nil?
+      siteArray[0].current_url = "http://#{options[:site_1]}"
+    else
+      siteArray[0].current_url = "https://#{options[:site_1]}"
+    end
   end
 
   snapper = Snapper.new(siteArray)

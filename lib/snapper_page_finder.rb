@@ -6,7 +6,6 @@ require 'uri'
 # Class to query an obe site and find the nbe details related to it
 class PageFinder
   attr_accessor :domain, :email, :password, :auth
-  HTTPS = "https://"
 
   def initialize(_domain, _email, _password, _verify_ssl_cert)
     @email = _email
@@ -21,7 +20,7 @@ class PageFinder
   # function to take a obe uri and id and get the nbe id and page id
   def get_nbe_page_id_from_obe_uri(obe_uri_in, obe_id)
     obe_uri = URI(obe_uri_in)
-    obe_uri_api = "#{HTTPS}#{obe_uri.host}/api/migrations/#{obe_id}"
+    obe_uri_api = "https://#{obe_uri.host}/api/migrations/#{obe_id}"
     puts("Querying: #{obe_uri_api} for a New UX Id")
 
     new_ux_id = get_nbe_id_from_obe_domain(obe_uri_api)
@@ -30,7 +29,7 @@ class PageFinder
       puts("New UX Id not found")
     else
       puts("New UX Id: #{new_ux_id}")
-      new_page = "#{HTTPS}#{obe_uri.host}/view/#{new_ux_id}"
+      new_page = "https://#{obe_uri.host}/view/#{new_ux_id}"
 
       begin
         puts("Querying: #{new_page} for the contents of the New UX page")
@@ -65,7 +64,7 @@ class PageFinder
 private
   # function to get the page id from a nbe id
   def get_page_id_for_given_nbe_id(uri, nbe_id)
-    new_uri = "#{HTTPS}#{uri.host}/metadata/v1/dataset/#{nbe_id}/pages.json"
+    new_uri = "https://#{uri.host}/metadata/v1/dataset/#{nbe_id}/pages.json"
 
     response = http_get_response(new_uri)
     parsed = response.parsed_response

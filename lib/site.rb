@@ -8,7 +8,6 @@ require_relative 'snapper_page_finder'
 # The site class which manages all interactions with a particular website
 class Site
   attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages
-  HTTPS       = "https://"
   GOOD_RESULT = "res/awesome.png"
   BAD_RESULT  = "res/not_awesome.png"
 
@@ -16,7 +15,7 @@ class Site
   def initialize(_domain, _4x4, _user, _password, _routes="", _override=false)
 
     profile = Selenium::WebDriver::Firefox::Profile.new
-  
+
     begin
       profile.add_extension("res", "JSErrorCollector.xpi")
       puts("JSErrorCollected loaded")
@@ -36,7 +35,7 @@ class Site
     @data_lens
     @log_dir      = "logs"
     @wait         = 5
-    @current_url  = _override ? "" : "#{HTTPS}#{@domain}/d/#{@_4x4}"  #if you override you are planning to explicitly tell what URL to snap
+    @current_url  = _override ? "" : "https://#{@domain}/d/#{@_4x4}"  #if you override you are planning to explicitly tell what URL to snap
     @processing_messages = []
     @snap_files   = {}
     @diff_files   = {}
@@ -111,13 +110,14 @@ class Site
     route_url = route
 
     if !full_path
-      route_url = "#{HTTPS}#{@domain}/#{route}"
+      route_url = "https://#{@domain}/#{route}"
     end
 
     puts("navigating to: #{route_url}")
 
     begin
       @driver.navigate.to(route_url)
+      @driver.manage.window.resize_to(1600, 1200)
       sleep(@wait)
     rescue
       puts("URL not found")
@@ -166,7 +166,7 @@ class Site
     @driver.close
   end
 
-private
+  private
 
   def check_and_capture
     if !check_for_page_errors
@@ -179,8 +179,9 @@ private
   def sign_in
     begin
       puts("Signing in")
-      @current_url = "#{HTTPS}#{@domain}/login"
+      @current_url = "https://#{@domain}/login"
       @driver.navigate.to(@current_url)
+      @driver.manage.window.resize_to(1600, 1200)
       check_for_javascript_errors
       puts("Done looking for javascript errors")
       snap("sign_in", @_4x4)
@@ -271,7 +272,6 @@ private
 
   # check a page for javascript errors
   def check_for_javascript_errors
-    #@processing_messages[@current_url] = ""
     errors = ErrorCheck.new()
     if errors.javascript_errors(@current_url, @log_dir)
       if !errors.results.nil?
