@@ -16,6 +16,7 @@ class Site
   def initialize(_domain, _4x4, _user, _password, _routes="", _override=false)
 
     profile = Selenium::WebDriver::Firefox::Profile.new
+  
     begin
       profile.add_extension("res", "JSErrorCollector.xpi")
       puts("JSErrorCollected loaded")
@@ -36,7 +37,7 @@ class Site
     @log_dir      = "logs"
     @wait         = 5
     @current_url  = _override ? "" : "#{HTTPS}#{@domain}/d/#{@_4x4}"  #if you override you are planning to explicitly tell what URL to snap
-    @processing_messages = {}
+    @processing_messages = []
     @snap_files   = {}
     @diff_files   = {}
     @body_files   = ""
@@ -275,10 +276,10 @@ private
     if errors.javascript_errors(@current_url, @log_dir)
       if !errors.results.nil?
         puts("Message count: #{errors.results.count}")
-        @processing_messages[@current_url] << errors.results.join(" ")
+        @processing_messages << @current_url << errors.results.join(" ")
         return true
       else
-        @processing_messages[@current_url] << "No javascript errors found"
+        @processing_messages << @current_url << " No javascript errors found"
       end
     else
       return false
@@ -289,10 +290,10 @@ private
   def check_for_page_errors
     errors = ErrorCheck.new()
     if errors.page_errors?(@current_url, @log_dir)
-      @processing_messages[@current_url] << "Error page result found"
+      @processing_messages = @current_url << " Error page result found"
       return true
     else
-      @processing_message[@current_url] << "Page result OK"
+      @processing_messages << @current_url << " Page result OK"
       return false
     end
   end

@@ -35,7 +35,7 @@ OptionParser.new do |opts|
     options[:password] = password
   end
 
-  opts.on('-o', '--override', 'Override the URL for the sit and use a full URL') do |override|
+  opts.on('-o', '--override', 'Override the URL for the site and use a full URL') do |override|
     options[:override] = true
   end
 
