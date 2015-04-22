@@ -41,13 +41,13 @@ $ example: ruby snapper-caller.rb -m snap -s opendata-demo.rc-socrata.com:6q4t-m
 * navigate to two sites, compare and produce a diff of them.
 ```bash
 $ ./snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4
-$ example: ruby snapper-caller.rb -m snap -s opendata-demo.rc-socrata.com:6q4t-m6c7 -d opendata-demo.rc-socrata.com:b5k5-ycfq
+$ example: ruby snapper-caller.rb -m diff -s opendata-demo.rc-socrata.com:6q4t-m6c7 -d opendata-demo.rc-socrata.com:b5k5-ycfq
 ```
 
 * navigate to two sites, login, compare and produce a diff of them.
 ```bash
 $ ./snapper-caller.rb -m diff -s domain:4x4 -d domain:4x4  -u <username> -p <password>
-$ example: ruby snapper-caller.rb -m snap -s opendata-demo.rc-socrata.com:6q4t-m6c7 -d opendata-demo.rc-socrata.com:b5k5-ycfq -u [SOCRATA_USER] -p [SOCRATA_PASSWORD]
+$ example: ruby snapper-caller.rb -m diff -s opendata-demo.rc-socrata.com:6q4t-m6c7 -d opendata-demo.rc-socrata.com:b5k5-ycfq -u [SOCRATA_USER] -p [SOCRATA_PASSWORD]
 ```
 
 * navigate to a publicly accessible (non-authenticated) site and take a snapshot of the DataLens page when no OBE page is available
