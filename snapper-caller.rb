@@ -12,13 +12,13 @@ OptionParser.new do |opts|
   end
 
   opts.on('-s', '--site1 SITE_1:4x4', 'The site to get snaps from') do |site_1|
-    elements = site_1.split(":", 2)
+    elements = site_1.split("|", 2)
     options[:site_1] = elements[0]
     options[:_4x4_1] = elements[1]
   end
 
   opts.on('-d', '--site2 SITE_2:4x4', 'The second site to get snaps fromm') do |site_2|
-    elements = site_2.split(":", 2)
+    elements = site_2.split("|", 2)
     options[:site_2] = elements[0]
     options[:_4x4_2] = elements[1]
   end
@@ -39,10 +39,6 @@ OptionParser.new do |opts|
     options[:override] = true
   end
 
-  opts.on('-i', '--insecure_url', 'Use http rather than https for the URL to take a snapshot') do |insecure_url|
-    options[:insecure_url] = true
-  end
-
   opts.on('-h', '--help', 'Display Help') do
     puts(opts)
     exit
@@ -56,12 +52,7 @@ if options[:mode] == 'snap'
 
   if !options[:override].nil?
     puts("page: #{options[:site_1]}")
-
-    if !options[:insecure_url].nil?
-      siteArray[0].current_url = "http://#{options[:site_1]}"
-    else
-      siteArray[0].current_url = "https://#{options[:site_1]}"
-    end
+    siteArray[0].current_url = options[:site_1]
   end
 
   snapper = Snapper.new(siteArray)

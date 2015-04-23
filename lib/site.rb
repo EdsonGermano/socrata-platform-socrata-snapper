@@ -35,7 +35,8 @@ class Site
     @data_lens
     @log_dir      = "logs"
     @wait         = 5
-    @current_url  = _override ? "" : "https://#{@domain}/d/#{@_4x4}"  #if you override you are planning to explicitly tell what URL to snap
+    #if you override you are planning to explicitly tell what URL to snap by assigning the full URL to this variable as an explicit assignment
+    @current_url  = _override ? nil : "https://#{@domain}/d/#{@_4x4}"  
     @processing_messages = []
     @snap_files   = {}
     @diff_files   = {}
@@ -146,7 +147,7 @@ class Site
 
     @current_url = get_nbe_datalens_url_from_obe
 
-    if !@current_url.nil? && !@current_url.empty?
+    if !@current_url.nil?
       navigate_to(@current_url, true)
       check_and_capture
     else
