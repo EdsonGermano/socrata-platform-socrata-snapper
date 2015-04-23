@@ -61,7 +61,8 @@ class PageFinder
     new_ux_id
   end
 
-private
+  private
+
   # function to get the page id from a nbe id
   def get_page_id_for_given_nbe_id(uri, nbe_id)
     new_uri = "https://#{uri.host}/metadata/v1/dataset/#{nbe_id}/pages.json"

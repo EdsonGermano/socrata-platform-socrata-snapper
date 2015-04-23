@@ -8,7 +8,6 @@ require_relative 'snapper_page_finder'
 # Class that drives the processing of commands to the library
 class Snapper
   attr_accessor :sites
-  HTTPS = "https://"
   @sites
 
   # initialize the class
@@ -44,7 +43,7 @@ class Snapper
     end
   end
 
-private
+  private
 
   # call the comparison operation on two sites.
   def compare_sites

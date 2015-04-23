@@ -106,7 +106,8 @@ class ErrorCheck
     return response_error
   end
 
-private
+  private
+
   # logging redirect to a message array for later flushing and to console.
   def compound_log(message)
     if @result.nil?

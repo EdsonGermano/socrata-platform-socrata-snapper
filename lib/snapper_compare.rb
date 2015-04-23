@@ -118,7 +118,7 @@ class ImageComparison
     end
   end
 
-private
+  private
 
   def compound_log(message)
       @verdict << message
