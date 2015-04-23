@@ -11,13 +11,13 @@ OptionParser.new do |opts|
     options[:mode] = mode
   end
 
-  opts.on('-s', '--site1 SITE_1:4x4', 'The site to get snaps from') do |site_1|
+  opts.on('-s', '--site1 SITE_1|4x4', 'The site to get snaps from') do |site_1|
     elements = site_1.split("|", 2)
     options[:site_1] = elements[0]
     options[:_4x4_1] = elements[1]
   end
 
-  opts.on('-d', '--site2 SITE_2:4x4', 'The second site to get snaps fromm') do |site_2|
+  opts.on('-d', '--site2 SITE_2|4x4', 'The second site to get snaps fromm') do |site_2|
     elements = site_2.split("|", 2)
     options[:site_2] = elements[0]
     options[:_4x4_2] = elements[1]

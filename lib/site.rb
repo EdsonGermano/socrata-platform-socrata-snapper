@@ -36,7 +36,7 @@ class Site
     @log_dir      = "logs"
     @wait         = 5
     #if you override you are planning to explicitly tell what URL to snap by assigning the full URL to this variable as an explicit assignment
-    @current_url  = _override ? nil : "https://#{@domain}/d/#{@_4x4}"  
+    @current_url  = _override ? nil : "https://#{@domain}/d/#{@_4x4}"
     @processing_messages = []
     @snap_files   = {}
     @diff_files   = {}
@@ -48,7 +48,7 @@ class Site
   def build_report(site_2)
     puts("Building HTML report")
 
-    self.snap_files.each do |key, value|
+    snap_files.each do |key, value|
       site1_file = value
       site2_file = (site_2.snap_files.has_key? key) ? site_2.snap_files[key] : ""
       diff_file = GOOD_RESULT
@@ -88,7 +88,7 @@ class Site
   def compare_to(site_2)
     matching = []
 
-    self.snap_files.each do |key, value|
+    snap_files.each do |key, value|
       if site_2.snap_files.has_key?(key)
         value2 = site_2.snap_files[key]
         puts("Comparing: #{key} route of #{value} => #{value2}")
@@ -229,7 +229,7 @@ class Site
     png_name = route.gsub("/", "_")
 
     @driver.save_screenshot("#{@log_dir}/#{png_name}_#{_4x4}.png")
-    self.snap_files[route] = "#{@log_dir}/#{png_name}_#{_4x4}.png"
+    snap_files[route] = "#{@log_dir}/#{png_name}_#{_4x4}.png"
 
     puts("finished. snap_file count: #{@snap_files.length}")
     return @current_url

@@ -93,13 +93,16 @@ class ErrorCheck
       response = HTTParty.get(page)
 
       if response.header.to_s.include? 'HTTPOK'
-        puts("Valid response. OK")
+        log.info("Valid response. OK")
+        compound_log("Valid response. OK")
       else
-        puts("Invalid response. #{response.header}")
+        log.error("Invalid response. #{response.header}")
+        compound_log("Invalid response. #{response.header}")
         response_error = true
       end
-    rescue => why
-      puts("Error response encountered\n#{why.message}")
+    rescue HTTParty::ResponseError => why  #rescue page errors to provide more details and continue
+      log.error("Error response encountered\n#{why.message}")
+      compound_response("Error response encountered\n#{why.response}")
       response_error = true
     end
 
