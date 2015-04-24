@@ -102,7 +102,7 @@ class ImageComparison
 
     puts('##########################')
     compound_log("pixels (total):     #{@images.first.pixels.length}")
-    compound_log("pixels changed:     #{diff.length}")
+    compound_log("pixels changed:     #{pixel_diff_count}")
     compound_log("image changed (%):  #{percentage_change}%")
     puts('##########################')
 

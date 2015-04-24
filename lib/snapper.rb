@@ -43,6 +43,26 @@ class Snapper
     end
   end
 
+  def compare_snapshots(domain_name, snap_1, snap_2, log_dir="logs")
+    compare_pictures = ImageComparison.new(domain_name, snap_1, snap_2, log_dir)
+    if compare_pictures.image_dimensions_match?
+      compare_pictures.detailed_compare_images
+    else
+      return 0 #images differ
+    end
+  end
+
+  def replace_blessed_image(blessed_image, new_blessed_image, log_dir="logs")
+    now = Time.now.to_i
+    if !Dir.exists? "#{log_dir}/backup"
+      Dir.mkdir("#{log_dir}/backup", 0766)
+    end
+
+    archived_image = Dir.pwd << "/" << log_dir << "/backup/" << File.basename(blessed_image, ".png") << "." << now.to_s << ".png"
+    puts("Archiving file #{blessed_image} to #{archived_image}")
+    FileUtils.mv(blessed_image, archived_image)
+  end
+
   private
 
   # call the comparison operation on two sites.

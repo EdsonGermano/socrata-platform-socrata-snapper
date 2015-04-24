@@ -52,3 +52,12 @@ $ example: ruby snapper-caller.rb -m diff -s opendata-demo.rc-socrata.com:6q4t-m
 $ ./snapper-caller.rb -m diff -s domain|OBE_4x4 -d domain:4x4  -u <username> -p <password>
 $ example: ruby snapper-caller.rb -m diff -s opendata-demo.rc-socrata.com:6q4t-m6c7 -d opendata-demo.rc-socrata.com:b5k5-ycfq -u [SOCRATA_USER] -p [SOCRATA_PASSWORD]
 ```
+
+#### File Compare
+*given two *.png files, compare them and produce an output of their differences if the files are of the same size*
+
+```bash
+$ ./snapper-caller.rb -m compare_files -c <domain>#<png_1>#<png_2>
+$ example: ruby snapper-caller.rb -m compare_files -c opdatata-demo.rc-socrata.com#
+
+```
