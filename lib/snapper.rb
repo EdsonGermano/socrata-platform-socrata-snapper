@@ -1,14 +1,13 @@
-# includes
-require_relative 'snapper_compare'
-require_relative 'snapper_error_check'
-require_relative 'snapper_page_finder'
 require 'fileutils'
 require 'nokogiri'
 require 'selenium-webdriver'
+require_relative 'snapper_compare'
+require_relative 'snapper_error_check'
+require_relative 'snapper_page_finder'
 
+# Class that drives the processing of commands to the library
 class Snapper
   attr_accessor :sites
-  HTTPS = "https://"
   @sites
 
   # initialize the class
@@ -17,6 +16,7 @@ class Snapper
     puts("sites length: #{@sites.length}")
   end
 
+  # snap shot a site
   def snap_shot
     @sites.each do |site|
       puts("Snapshoting: #{site.current_url}")
@@ -24,6 +24,7 @@ class Snapper
     end
   end
 
+  # run through the site list, processing them
   def process_sites
     @sites.each do |site|
       site.process_site
@@ -44,6 +45,7 @@ class Snapper
 
   private
 
+  # call the comparison operation on two sites.
   def compare_sites
     result = @sites[0].compare_to(@sites[1])
     @sites[0].build_report(@sites[1])

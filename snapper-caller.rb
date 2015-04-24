@@ -1,7 +1,3 @@
-#!/usr/bin/env ruby
-
-# $:.unshift(File.expand_path(File.dirname(__FILE__), 'lib'))
-
 require 'optparse'
 require_relative 'lib/snapper'
 require_relative 'lib/site'
@@ -15,14 +11,14 @@ OptionParser.new do |opts|
     options[:mode] = mode
   end
 
-  opts.on('-s', '--site1 SITE_1:4x4', 'The site to get snaps from') do |site_1|
-    elements = site_1.split(":", 2)
+  opts.on('-s', '--site1 SITE_1|4x4', 'The site to get snaps from') do |site_1|
+    elements = site_1.split("|", 2)
     options[:site_1] = elements[0]
     options[:_4x4_1] = elements[1]
   end
 
-  opts.on('-d', '--site2 SITE_2:4x4', 'The second site to get snaps fromm') do |site_2|
-    elements = site_2.split(":", 2)
+  opts.on('-d', '--site2 SITE_2|4x4', 'The second site to get snaps fromm') do |site_2|
+    elements = site_2.split("|", 2)
     options[:site_2] = elements[0]
     options[:_4x4_2] = elements[1]
   end
@@ -39,6 +35,10 @@ OptionParser.new do |opts|
     options[:password] = password
   end
 
+  opts.on('-o', '--override', 'Override the URL for the site and use a full URL to take a snapshot') do |override|
+    options[:override] = true
+  end
+
   opts.on('-h', '--help', 'Display Help') do
     puts(opts)
     exit
@@ -49,6 +49,12 @@ siteArray ||= []
 
 if options[:mode] == 'snap'
   siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route])
+
+  if !options[:override].nil?
+    puts("page: #{options[:site_1]}")
+    siteArray[0].current_url = options[:site_1]
+  end
+
   snapper = Snapper.new(siteArray)
   snapper.snap_shot
 
