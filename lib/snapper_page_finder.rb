@@ -2,6 +2,7 @@ require 'core/auth/client'
 require 'httparty'
 require 'json'
 require 'uri'
+require_relative 'utils'
 
 # Class to query an obe site and find the nbe details related to it
 class PageFinder
@@ -12,6 +13,7 @@ class PageFinder
     @password = _password
     @domain = _domain
     @verify_ssl_cert = _verify_ssl_cert
+    @log = Utils::Log.new(true, true)
     @auth = Core::Auth::Client.new(@domain, email: @email, password: @password, verify_ssl_cert: @verify_ssl_cert)
 
     fail('Authentication failed') unless @auth.logged_in?
@@ -21,23 +23,23 @@ class PageFinder
   def get_nbe_page_id_from_obe_uri(obe_uri_in, obe_id)
     obe_uri = URI(obe_uri_in)
     obe_uri_api = "https://#{obe_uri.host}/api/migrations/#{obe_id}"
-    puts("Querying: #{obe_uri_api} for a New UX Id")
+    @log.info("Querying: #{obe_uri_api} for a New UX Id")
 
     new_ux_id = get_nbe_id_from_obe_domain(obe_uri_api)
 
     if new_ux_id.nil?
-      puts("New UX Id not found")
+      @log.info("New UX Id not found")
     else
-      puts("New UX Id: #{new_ux_id}")
+      @log.info("New UX Id: #{new_ux_id}")
       new_page = "https://#{obe_uri.host}/view/#{new_ux_id}"
 
       begin
-        puts("Querying: #{new_page} for the contents of the New UX page")
+        @log.info("Querying: #{new_page} for the contents of the New UX page")
         response = http_get_response(new_page)
-        puts("Page: #{new_page} found.")
+        @log.info("Page: #{new_page} found.")
         new_page
       rescue
-        puts("Page: #{new_page} not found.")
+        @log.error("Page: #{new_page} not found.")
         nil
       end
     end
@@ -51,7 +53,7 @@ class PageFinder
     response = http_get_response(uri)
     parsed = response.parsed_response
 
-    puts("New UX Id: #{parsed["nbeId"]}")
+    @log.info("New UX Id: #{parsed["nbeId"]}")
 
     if parsed["nbeId"].nil? || parsed["nbeId"].empty?
     else
@@ -71,15 +73,15 @@ class PageFinder
     parsed = response.parsed_response
 
     begin
-      puts("PageId: #{parsed["publisher"][0]["pageId"]}")
+      @log.info("PageId: #{parsed["publisher"][0]["pageId"]}")
       parsed["publisher"][0]["pageId"]
     rescue
-      puts("PageId not found")
+      @log.error("PageId not found")
     end
   end
 
   def http_get_response(uri)
-    puts("Auth: #{@auth.cookie}\nCalling: #{uri.to_s}")
+    @log.info("Auth: #{@auth.cookie}\nCalling: #{uri.to_s}")
     response = HTTParty.get(uri, headers: {'Cookie' => @auth.cookie})
   end
 end

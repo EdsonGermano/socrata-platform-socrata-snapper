@@ -2,13 +2,15 @@ require 'logger'
 require 'httparty'
 require 'phantomjs'
 require 'selenium-webdriver'
+require_relative 'utils'
 
 # Class that contains error checking routines
 class ErrorCheck
+  extend Utils
   attr_accessor :browser, :results
-  @results = []
 
   def initialize()
+    @log = Utils::Log.new(true, true)
   end
 
   # check if a page contains javascript errors.
@@ -22,54 +24,35 @@ class ErrorCheck
       Dir.mkdir(log_path)
     end
 
-    puts("Looking for javascript errors on: #{page}")
-    file = File.open("#{log_path}/javascript_errors.log", "a")
-    log = Logger.new(file)
+    @log.info("Looking for javascript errors on: #{page}")
 
-    profile = Selenium::WebDriver::Firefox::Profile.new
-
-    begin
-      profile.add_extension("res", "JSErrorCollector.xpi")
-      puts("JSErrorCollected loaded")
-    rescue => why
-      compound_log("JSErrorCollector failed to load")
-      compound_log("ERROR: #{why.message}")
-    end
-
-    browser = Selenium::WebDriver.for :firefox, :profile => profile
-    browser.navigate.to(page)
+    driver = Utils::WebBrowser.new
+    driver.browser.navigate.to(page)
 
     begin
-      errors = browser.execute_script("return window.JSErrorCollector_errors ? window.JSErrorCollector_errors.pump() : []")
+      errors = driver.browser.execute_script("return window.JSErrorCollector_errors ? window.JSErrorCollector_errors.pump() : []")
     rescue => why
-      puts("Script execution failed. Errors => #{why.message}")
+      @log.error("Script execution failed. Errors => #{why.message}")
     end
 
     begin
       if errors.any?
-        log.info('----------------------------------')
-        log.error("Found #{errors.length} javascript errors(s) in page #{page}")
-        log.info('----------------------------------')
-
-        compound_log("Found #{errors.length} javascript errors(s) in page #{page}\n")
+        @log.info('----------------------------------')
+        @log.error("Found #{errors.length} javascript errors(s) in page #{page}")
+        @log.info('----------------------------------')
 
         errors.each do |error|
-          compound_log("ERROR: " + error["errorMessage"] + " (" + error["sourceName"] + ":" + error["lineNumber"].to_s + ")\n\n")
+          @log.error("ERROR: " + error["errorMessage"] + " (" + error["sourceName"] + ":" + error["lineNumber"].to_s + ")\n\n")
         end
-        log.close
         errors_found = 1
       else
-        log.info("No errors detected on #{page}")
-        compound_log("No errors detected on #{page}")
+        @log.info("No errors detected on #{page}")
       end
     rescue => why
-      log.error("Error opening browser for page #{page}. Message #{why.message}")
-      compound_log("Error opening browser for page #{page}. Message #{why.message}")
+      @log.error("Error opening browser for page #{page}. Message #{why.message}")
       errors_found = true
     ensure
-      file.close
-      log.close
-      browser.close
+      driver.browser.close
     end
 
     return errors_found
@@ -84,39 +67,24 @@ class ErrorCheck
       Dir.mkdir(log_path)
     end
 
-    puts("Looking for page errors on #{page}")
-    file = File.open("#{log_path}/page_errors.log", "a")
-    log = Logger.new(file)
+    @log.info("Looking for page errors on #{page}")
 
     begin
       # use httparty
-      response = HTTParty.get(page)
+      uri = URI.escape(page)
+      response = HTTParty.get(uri)
 
       if response.header.to_s.include? 'HTTPOK'
-        log.info("Valid response. OK")
-        compound_log("Valid response. OK")
+        @log.info("Valid response. OK")
       else
-        log.error("Invalid response. #{response.header}")
-        compound_log("Invalid response. #{response.header}")
+        @log.error("Invalid response. #{response.header}")
         response_error = true
       end
     rescue HTTParty::ResponseError => why  #rescue page errors to provide more details and continue
-      log.error("Error response encountered\n#{why.message}")
-      compound_response("Error response encountered\n#{why.response}")
+      @log.error("Error response encountered\n#{why.message}")
       response_error = true
     end
 
     return response_error
-  end
-
-  private
-
-  # logging redirect to a message array for later flushing and to console.
-  def compound_log(message)
-    if @result.nil?
-      @result = Array.new
-    end
-    @result << message.nil? ? "" : message
-    puts(message)
   end
 end

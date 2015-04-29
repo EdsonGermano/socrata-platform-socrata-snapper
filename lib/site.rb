@@ -1,32 +1,26 @@
 require 'fileutils'
 require 'nokogiri'
-require 'selenium-webdriver'
+require 'uri'
 require_relative 'snapper_compare'
 require_relative 'snapper_error_check'
 require_relative 'snapper_page_finder'
+require_relative 'utils'
 
 # The site class which manages all interactions with a particular website
 class Site
-  attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages
+  attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages, :run_page_checks, :baseline_snapshot
   GOOD_RESULT = "res/awesome.png"
   BAD_RESULT  = "res/not_awesome.png"
 
   # Initialize the Site object.
   def initialize(_domain, _4x4, _user, _password, _routes="", _override=false)
 
-    profile = Selenium::WebDriver::Firefox::Profile.new
+    @log = Utils::Log.new(true, true)
 
-    begin
-      profile.add_extension("res", "JSErrorCollector.xpi")
-      puts("JSErrorCollected loaded")
-      @loaded = "true"
-    rescue => why
-      puts("JSErrorCollector failed to load")
-      puts("ERROR: #{why.message}")
-    end
+
 
     @domain       = _domain
-    @driver       = Selenium::WebDriver.for :firefox, :profile => profile
+    @driver       = Utils::WebBrowser.new(false)
     @password     = _password
     @routes       = _routes.nil? ? "" : _routes.split(':')
     @user         = _user
@@ -40,13 +34,16 @@ class Site
     @processing_messages = []
     @snap_files   = {}
     @diff_files   = {}
+    @baseline_files = {}
     @body_files   = ""
-    @body_messages = ""
+    @body_messages      = ""
+    @run_page_checks    = true
+    @baseline_snapshot  = false
   end
 
   # build the site comparison report.
   def build_report(site_2)
-    puts("Building HTML report")
+    @log.info("Building HTML report")
 
     snap_files.each do |key, value|
       site1_file = value
@@ -72,7 +69,7 @@ class Site
     end
 
     if(!@processing_messages.nil?)
-      puts("Processing message count: #{@processing_messages.count}")
+      @log.info("Processing message count: #{@processing_messages.count}")
       @body_messages << "<tr>"
 
       processing_messages.each { |key, value|
@@ -91,10 +88,10 @@ class Site
     snap_files.each do |key, value|
       if site_2.snap_files.has_key?(key)
         value2 = site_2.snap_files[key]
-        puts("Comparing: #{key} route of #{value} => #{value2}")
-        matching << compare_snapshots(key, value, value2)
+        @log.info("Comparing: #{key} route of #{log_dir}/#{value} => #{log_dir}/#{value2}")
+        matching << compare_snapshots(key, "#{log_dir}/#{value}", "#{log_dir}/#{value2}")
       else
-        puts("Snap route lists don't match. Missing #{key}")
+        @log.info("Snap route lists don't match. Missing #{key}")
         matching << false
       end
     end
@@ -114,15 +111,15 @@ class Site
       route_url = "https://#{@domain}/#{route}"
     end
 
-    puts("navigating to: #{route_url}")
+    @log.info("Navigating to: #{route_url}")
 
     begin
-      @driver.navigate.to(route_url)
-      @driver.manage.window.resize_to(1600, 1200)
+      @driver.browser.navigate.to(route_url)
+      @driver.browser.manage.window.resize_to(1600, 1200)
       sleep(@wait)
     rescue
-      puts("URL not found")
-      @driver.close
+      @log.info("URL not found")
+      @driver.browser.close
     end
   end
 
@@ -132,12 +129,12 @@ class Site
     if !@user.nil? && !@password.nil?
       sign_in
     else
-      puts("Not logging in. No Username or Password provided")
+      @log.info("Not logging in. No Username or Password provided")
     end
 
     # visit each route, taking snapshots
     if @routes.nil? || @routes.empty?
-      puts("No routes defined for naviation")
+      @log.info("No routes defined for naviation")
     else
       @routes.each do |route|
         navigate_to(route)
@@ -151,101 +148,197 @@ class Site
       navigate_to(@current_url, true)
       check_and_capture
     else
-      puts("No NBE site located for this OBE source")
+      @log.warn("No NBE site located for this OBE source")
     end
-    @driver.close
+    @driver.browser.close
   end
 
-  def take_and_archive_snapshot
+  # function to sign in (if requested), navigate and check and capture page
+  def take_and_save_snapshot
     # sign in if required
     if !@user.nil? && !@password.nil?
-      sign_in
+      if @current_url.include?("/view/")
+        sign_in_data_lens
+      elsif @current_url.include?("/dataset/")
+        sign_in
+      else
+        @log.warn("Login credentials provided for an unsupported page: #{@current_url}")
+      end
     end
 
     navigate_to(@current_url, true)
     check_and_capture
-    @driver.close
+    @driver.browser.close
+  end
+
+  # check for baseline mismatches when doing delta comparisons
+  def matches_with_baseline?
+    get_baselines_for_site = 0
   end
 
   private
 
+  # find all the baseline files that may exist in the log directory
+  def get_baselines_for_site
+    png_files = Dir.glob("#{@log_dir}/*.baseline.png")
+    mismatches = 0
+    baseline_files = []
+    png_files.each do |png|
+      @snap_files.each do |key, element|
+        elements = element.split('.')
+        if png.include?(elements[0]) && png.include?("baseline")
+          @log.info("Baseline found >> #{png}")
+          baseline_files << png
+          if !compare_snapshots(@domain, "#{@log_dir}/#{element}", png)
+            mismatches = mismatches + 1
+          end
+        end
+      end
+    end
+    mismatches
+  end
+
+  # run page and javascript checks and then snap picture
   def check_and_capture
-    if !check_for_page_errors
-      check_for_javascript_errors
-      snap("#{@domain}_snap", @_4x4)
+    if run_page_checks
+      if !check_for_page_errors
+        check_for_javascript_errors
+        snap("#{@domain}", @_4x4)
+      end
+    else
+      snap("#{@domain}", @_4x4)
     end
   end
 
   # sign in to the login page for a domain
   def sign_in
     begin
-      puts("Signing in")
+      @log.info("Signing in")
       @current_url = "https://#{@domain}/login"
-      @driver.navigate.to(@current_url)
-      @driver.manage.window.resize_to(1600, 1200)
+      @driver.browser.navigate.to(@current_url)
+      @driver.browser.manage.window.resize_to(1600, 1200)
       check_for_javascript_errors
-      puts("Done looking for javascript errors")
+      @log.info("Done looking for javascript errors")
       snap("sign_in", @_4x4)
 
-      puts("Input user")
+      @log.info("Input user")
       # enter user in username field
-      element = @driver.find_element(:id, 'user_session_login')
+      element = @driver.browser.find_element(:id, 'user_session_login')
       element.clear
       element.send_keys(@user)
 
-      puts("Input password")
+      @log.info("Input password")
       # enter password
-      element = @driver.find_element(:id, 'user_session_password')
+      element = @driver.browser.find_element(:id, 'user_session_password')
       element.clear
       element.send_keys(@password)
 
-      puts("Click commit")
+      @log.info("Click commit")
       # click submit button
-      element = @driver.find_element(:name, 'commit')
+      element = @driver.browser.find_element(:name, 'commit')
       element.click
       sleep(@wait)
       check_for_javascript_errors
-      @current_url = @driver.current_url
-      puts("Now On #{@driver.current_url}")
+      @current_url = @driver.browser.current_url
+      @log.info("Now On #{@driver.browser.current_url}")
       snap("dataset", @_4x4)
     rescue => why
-      puts("Unable to complete operation. Message: #{why.message}")
-      puts("Operation terminated")
+      @log.error("Unable to complete operation. Message: #{why.message}")
+      @log.error("Operation terminated")
       snap("dataset", @_4x4)
+    end
+  end
+
+  # sign in to a datalens page
+  def sign_in_data_lens
+    begin
+      @log.info("Browsing to DataLens")
+      @current_url = @domain.include?("http") ? "#{@domain}" : "https://#{@domain}"
+      @driver.browser.navigate.to(@current_url)
+      @driver.browser.manage.window.resize_to(1600, 1200)
+      check_for_javascript_errors
+      @log.info("Done looking for javascript errors")
+      @log.info("Logging into DataLens")
+      snap("sign_in", @_4x4)
+
+      @log.info("Sign in")
+
+      element = @driver.browser.find_element(:link, 'Sign In')
+      element.click
+
+      # enter user in username field
+      @log.info("Input username")
+      element = @driver.browser.find_element(:id, 'user_session_login')
+      element.clear
+      element.send_keys(@user)
+
+      @log.info("Input password")
+      # enter password
+      element = @driver.browser.find_element(:id, 'user_session_password')
+      element.clear
+      element.send_keys(@password)
+
+      @log.info("Click commit")
+      # click submit button
+      element = @driver.browser.find_element(:name, 'commit')
+      element.click
+      sleep(@wait)
+
+      @current_url = @driver.browser.current_url
+      @log.info("Now On #{@driver.browser.current_url}")
+      snap("view", @_4x4)
+    rescue => why
+      @log.error("Unable to complete operation. Message: #{why.message}")
+      @log.error("Operation terminated")
+      snap("view", @_4x4)
     end
   end
 
   # snap an image from a website and write it locally
   def snap(route, _4x4)
-    puts("snapping #{@current_url} for route #{route}")
+    @log.info("Snapping [#{@current_url}] for route [#{route}]")
 
     # give it x seconds for the page to load
     sleep(@wait)
 
     FileUtils.mkdir_p(@log_dir) unless File.exists?(@log_dir)
 
-    puts("writing file here #{@log_dir}/#{route}_#{_4x4}.png")
+    if route.nil? || route.empty?
+      url = URI.escape(@current_url)
+      uri = URI.parse(url)
+      route = uri.host
+    end
 
-    png_name = route.gsub("/", "_")
+    _4x4 = _4x4.nil? ? "override" : _4x4.strip
+    png_name = route.gsub(".", "_")
+    png_name = png_name.gsub("http://","").gsub("https://", "")
 
-    @driver.save_screenshot("#{@log_dir}/#{png_name}_#{_4x4}.png")
-    snap_files[route] = "#{@log_dir}/#{png_name}_#{_4x4}.png"
+    snap_file = "#{png_name}_#{_4x4}.png"
+    snap_file = snap_file.gsub('/', '_')
 
-    puts("finished. snap_file count: #{@snap_files.length}")
-    return @current_url
+    @driver.browser.save_screenshot("#{@log_dir}/#{snap_file}")
+    snap_files[route] = snap_file
+
+    @log.info("Snap finished. File written: #{snap_files[route]} snap_file count: #{@snap_files.length}")
+    @log.info("Baseline request? #{@baseline_snapshot}")
+
+    if @baseline_snapshot
+      set_baseline_image(snap_files[route])
+    end
+    return snap_files[route]
   end
 
   # compare an image with the current image name
   def compare_snapshots(route, image_1, image_2)
     if(image_1 == image_2)
-      puts("These are the same image. Skipping comparison")
+      @log.info("These are the same image. Skipping comparison")
       @diff_files = {route => GOOD_RESULT}
       return true
     else
       compare = ImageComparison.new(route, image_1, image_2, @log_dir)
 
       if compare.image_dimensions_match?
-        puts("Image dimensions match")
+        @log.info("Image dimensions match")
         if compare.detailed_compare_images == 1
           @diff_files[route] = GOOD_RESULT
           return true
@@ -254,7 +347,7 @@ class Site
           return false
         end
       else
-        puts("Image dimensions DON'T match")
+        @log.info("Image dimensions DON'T match")
         @diff_files[route] = BAD_RESULT
         return false
       end
@@ -265,10 +358,36 @@ class Site
   def get_nbe_datalens_url_from_obe
     begin
       pf = PageFinder.new(@domain, @user, @password, false)
-      @data_lens = pf.get_nbe_page(@current_url, @_4x4)
+      @data_lens = pf.get_nbe_page_id_from_obe_uri(@current_url, @_4x4)
     rescue => why
-      puts("An error occured while looking for a NBE datalens URL. Message: #{why.message}")
+      @log.error("An error occured while looking for a NBE datalens URL. Message: #{why.message}")
     end
+  end
+
+  # move a logged image to the backup folder
+  def archive_image(image, log_dir="logs/backup")
+    now = Time.now.to_i
+    if !Dir.exists? log_dir
+      Dir.mkdir(log_dir, 0766)
+    end
+
+    archived_image = "#{Dir.pwd}/#{log_dir}/" << File.basename(image, ".png") << ".#{now.to_s}.png"
+    @log.info("Archiving file #{image} to #{archived_image}")
+    FileUtils.mv(image, archived_image)
+  end
+
+  # archive the old baseline and set a new one
+  def set_baseline_image(image)
+    baseline_file_name = File.basename(image, ".png") << ".baseline.png"
+    baseline_img_path = "#{Dir.pwd}/#{log_dir}/" << baseline_file_name
+
+    if File.exists? baseline_img_path
+      @log.info("File: #{baseline_img_path} exists. Archiving.")
+      archive_image(baseline_img_path)
+    end
+
+    FileUtils.cp("#{@log_dir}/#{image}", baseline_img_path)
+    @log.info("Renamed file: #{Dir.pwd}/#{@log_dir}/#{image} to: #{baseline_img_path}")
   end
 
   # check a page for javascript errors
@@ -276,7 +395,7 @@ class Site
     errors = ErrorCheck.new()
     if errors.javascript_errors(@current_url, @log_dir)
       if !errors.results.nil?
-        puts("Message count: #{errors.results.count}")
+        @log.error("Message count: #{errors.results.count}")
         @processing_messages << @current_url << errors.results.join(" ")
         return true
       else

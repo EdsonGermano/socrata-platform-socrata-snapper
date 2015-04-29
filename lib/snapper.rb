@@ -4,6 +4,7 @@ require 'selenium-webdriver'
 require_relative 'snapper_compare'
 require_relative 'snapper_error_check'
 require_relative 'snapper_page_finder'
+require_relative 'utils'
 
 # Class that drives the processing of commands to the library
 class Snapper
@@ -13,15 +14,31 @@ class Snapper
   # initialize the class
   def initialize(_sites=[])
     @sites = _sites
-    puts("sites length: #{@sites.length}")
+    @log = Utils::Log.new(true, true)
+    @log.info("Sites length: #{@sites.length}")
   end
 
   # snap shot a site
   def snap_shot
+    mismatches = 0
+
+    # take the snapshot. if we set the tool to re-baseline the site, do that and don't run a comparison
+    # else, run the comparison against the previous baseline and report
     @sites.each do |site|
-      puts("Snapshoting: #{site.current_url}")
-      site.take_and_archive_snapshot
+      site.take_and_save_snapshot
+      if !site.baseline_snapshot
+        if site.matches_with_baseline?
+          @log.info("Snap matches baseline")
+        else
+          @log.warn("Snap does not match baseline")
+          mismatches = mismatches + 1
+        end
+      else
+        @log.info("No baseline comparisons requested")
+      end
     end
+
+    mismatches
   end
 
   # run through the site list, processing them
@@ -32,35 +49,25 @@ class Snapper
 
     if @sites.length == 2
       if compare_sites
-        puts("Comparison of images showed a match")
-        return true
+        @log.info("Comparison of images showed a match")
+        return 0 # passing return code for Jenkins
       else
-        puts("Comparison of images showed a mismatch")
-        return false
+        @log.warn("Comparison of images showed a mismatch")
+        return 1 # failing return code for Jenkins
       end
     else
-      puts("Skipping snapshot comparison. Incorrect number of sites.")
+      @log.warn("Skipping snapshot comparison. Incorrect number of sites.")
     end
   end
 
-  def compare_snapshots(domain_name, snap_1, snap_2, log_dir="logs")
-    compare_pictures = ImageComparison.new(domain_name, snap_1, snap_2, log_dir)
+  # given two png files, compare them for size and graphical differences
+  def compare_snapshots(domain_name, baseline_img, candidate_img, log_dir="logs")
+    compare_pictures = ImageComparison.new(domain_name, baseline_img, candidate_img, log_dir)
     if compare_pictures.image_dimensions_match?
       compare_pictures.detailed_compare_images
     else
-      return 0 #images differ
+      return 1 #images differ. failing return code for Jenkins
     end
-  end
-
-  def replace_blessed_image(blessed_image, new_blessed_image, log_dir="logs")
-    now = Time.now.to_i
-    if !Dir.exists? "#{log_dir}/backup"
-      Dir.mkdir("#{log_dir}/backup", 0766)
-    end
-
-    archived_image = Dir.pwd << "/" << log_dir << "/backup/" << File.basename(blessed_image, ".png") << "." << now.to_s << ".png"
-    puts("Archiving file #{blessed_image} to #{archived_image}")
-    FileUtils.mv(blessed_image, archived_image)
   end
 
   private
@@ -102,13 +109,13 @@ class Snapper
       f1.puts(doc)
     end
 
-    puts("report: #{@sites[0].log_dir}/snap_comparison.html")
+    @log.info("Report: #{@sites[0].log_dir}/snap_comparison.html")
 
     if result == true
-      puts("the sites are the same")
+      @log.info("The sites are the same")
       return result #pass
     else
-      puts("the sites are not the same")
+      @log.warn("The sites are not the same")
       return result #fail
     end
   end

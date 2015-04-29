@@ -1,21 +1,30 @@
 require 'chunky_png'
+require_relative 'utils'
 
 include ChunkyPNG::Color
 
 # class for comparing png files.Comparison is limited two between 2 files at a time.
 class ImageComparison
-  attr_accessor :images, :verdict, :diff_img, :max_width, :max_height
+  attr_accessor :images, :log, :diff_img, :max_width, :max_height
 
-  def initialize(route, image1, image2, log_dir)
+  def initialize(route, image1, image2, log_dir="logs")
     @log_dir = log_dir
+    @log = Utils::Log.new(true, true)
+
+    route  = route.nil? ? "unknown" : route
     @diff_img = "#{@log_dir}/#{route}_diff.png"
-    @images = [
-      ChunkyPNG::Image.from_file(image1),
-      ChunkyPNG::Image.from_file(image2)
-    ]
-    @verdict = []
-    @max_width = 0
-    @max_height = 0
+
+    if !image1.nil? && !image2.nil?
+      @images = [
+        ChunkyPNG::Image.from_file(image1),
+        ChunkyPNG::Image.from_file(image2)
+      ]
+
+      @max_width = 0
+      @max_height = 0
+    else
+      @log.error("One of the provided images is null: image1=>[#{image1}] image2=>[#{image2}]")
+    end
   end
 
   # function to check if the two images have the same dimensions
@@ -24,26 +33,26 @@ class ImageComparison
     diff = []
     if @images.first.pixels.length == @images.last.pixels.length
       if @images.first.width == @images.last.width
-        @verdict << "Image dimensions match"
+        @log.info("Image dimensions match")
         images_match = true
       else
-        @verdict << "Image width DOESN'T match"
+        @log.warn("Image width DOESN'T match")
       end
     else
-      @verdict << "Image size DOESN'T match"
+      @log.warn("Image size DOESN'T match")
     end
 
     @max_width = @images.first.width > @images.last.width ? @images.first.width : @images.last.width
     @max_height = @images.first.height > @images.last.height ? @images.first.height : @images.last.height
 
-    compound_log("Image 1: #{@images.first.width} X #{@images.first.height} Pixels: #{@images.first.pixels.length}")
-    compound_log("Image 2: #{@images.last.width} X #{@images.last.height} Pixels: #{@images.last.pixels.length}")
+    @log.info("Image 1: #{@images.first.width} X #{@images.first.height} Pixels: #{@images.first.pixels.length}")
+    @log.info("Image 2: #{@images.last.width} X #{@images.last.height} Pixels: #{@images.last.pixels.length}")
     return images_match
   end
 
   # this comparison just determines if an image differs and saves a diffed area
   def quick_compare_images
-    puts('Quick comparison started...')
+    @log.info('Quick comparison started...')
     diff = []
     @images.first.height.times do |y|
       @images.first.row(y).each_with_index do |pixel, x|
@@ -53,11 +62,11 @@ class ImageComparison
 
     percentage_change = (diff.length.to_f / @images.first.pixels.length.to_f) * 100
 
-    puts('##########################')
-    compound_log("pixels (total):     #{@images.first.pixels.length}")
-    compound_log("pixels changed      #{diff.length}")
-    compound_log("pixels changed (%): #{percentage_change}%")
-    puts('##########################')
+    @log.info('##########################')
+    @log.info("Pixels (Total):     #{@images.first.pixels.length}")
+    @log.info("Pixels changed      #{diff.length}")
+    @log.info("Pixels changed (%): #{percentage_change}%")
+    @log.info('##########################')
 
     x, y = diff.map{ |xy| xy[0] }, diff.map{ |xy| xy[1] }
 
@@ -75,7 +84,7 @@ class ImageComparison
   # to a file
   def detailed_compare_images
     diff = []
-    puts('Detailed Comparison started...')
+    @log.info('Detailed Comparison started...')
     output_temp = ChunkyPNG::Image.new(@max_width, @max_height, WHITE)
 
     @images.first.height.times do |y|
@@ -91,7 +100,7 @@ class ImageComparison
             output_temp[x,y] = grayscale(MAX - (score * MAX).round)
             diff << score
           rescue
-            compound_log("Images not the same. Different sizes")
+            @log.info("Images not the same. Different sizes")
           end
         end
       end
@@ -101,27 +110,20 @@ class ImageComparison
     percentage_change = (pixel_diff_count.to_f / @images.first.pixels.length.to_f) * 100
 
     puts('##########################')
-    compound_log("pixels (total):     #{@images.first.pixels.length}")
-    compound_log("pixels changed:     #{pixel_diff_count}")
-    compound_log("image changed (%):  #{percentage_change}%")
+    @log.info("Pixels (Total):     #{@images.first.pixels.length}")
+    @log.info("Pixels changed:     #{pixel_diff_count}")
+    @log.info("Image changed (%):  #{percentage_change}%")
     puts('##########################')
 
-    puts("Writing diff file: #{@diff_img}")
+    @log.info("Writing diff file: #{@diff_img}")
     output_temp.save("#{@diff_img}")
 
     if diff.length > 0
-      puts("Images differ")
+      @log.warn("Images differ")
       return 0 #images differ
     else
-      puts("Images are identical")
+      @log.info("Images are identical")
       return 1
     end
-  end
-
-  private
-
-  def compound_log(message)
-      @verdict << message
-      puts(message)
   end
 end
