@@ -1,5 +1,5 @@
 require 'colorize'
-#require 'logger'
+require 'logger'
 require 'nokogiri'
 require 'selenium-webdriver'
 
@@ -9,12 +9,13 @@ module Utils
   class Log
     attr_accessor :log_messages, :log_file
 
-    def initialize(write_file = false, write_array = false, write_log="logger.log")
+    def initialize(write_file = false, write_array = false, log_level=Logger::INFO, write_log="logger.log")
       @log_messages = Array.new
       @write_to_file = write_file
       @write_to_buffer_array = write_array
-#      @log_file =  Logger.new(write_log)
-#      @log_file.info("Writing to log #{write_log}")
+      @log_file =  Logger.new(write_log)
+      @log_file.level = log_level
+      @log_file.info("Writing to log #{write_log}")
     end
 
     def info(message)
@@ -23,7 +24,7 @@ module Utils
       end
 
       if @write_to_file
-#        @log_file.info(message)
+        @log_file.info(message)
       end
 
       puts("INFO: #{message}".green)
@@ -35,7 +36,7 @@ module Utils
       end
 
       if @write_to_file
-#        @log_file.error(message)
+        @log_file.error(message)
       end
 
       puts("ERROR: #{message}".red)
@@ -48,10 +49,24 @@ module Utils
       end
 
       if @write_to_file
-#        @log_file.warn(message)
+        @log_file.warn(message)
       end
 
       puts("WARN: #{message}".yellow)
+    end
+
+    def debug(message)
+      if @log_file.level == Logger::DEBUG
+        if @write_to_buffer_array
+          @log_messages.push("DEBUG: #{message}")
+        end
+
+        if @write_to_file
+          @log_file.debug(message)
+        end
+
+        puts("DEBUG: #{message}".white)
+      end
     end
 
     def clear_message_buffer
@@ -80,14 +95,15 @@ module Utils
   class WebBrowser
     attr_accessor :browser, :extensions_loaded
 
-    def initialize(add_extension=true)
+    def initialize(add_extension=true, verbose=false)
       profile = Selenium::WebDriver::Firefox::Profile.new
-      log = Log.new(true, true)
+      verbosity = verbose ? Logger::DEBUG : Logger::INFO
+      log = Log.new(true, true, verbosity)
 
       if add_extension
         begin
           profile.add_extension("res", "JSErrorCollector.xpi")
-          log.info("JSErrorCollected loaded")
+          log.debug("JSErrorCollected loaded")
           @extensions_loaded = "true"
         rescue => why
           log.error("JSErrorCollector failed to load")

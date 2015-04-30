@@ -8,14 +8,14 @@ require_relative 'utils'
 class PageFinder
   attr_accessor :domain, :email, :password, :auth
 
-  def initialize(_domain, _email, _password, _verify_ssl_cert)
+  def initialize(_domain, _email, _password, _verify_ssl_cert, verbose=false)
     @email = _email
     @password = _password
     @domain = _domain
     @verify_ssl_cert = _verify_ssl_cert
-    @log = Utils::Log.new(true, true)
+    verbosity = verbose ? Logger::DEBUG : Logger::INFO
+    @log = Utils::Log.new(true, true, verbosity)
     @auth = Core::Auth::Client.new(@domain, email: @email, password: @password, verify_ssl_cert: @verify_ssl_cert)
-
     fail('Authentication failed') unless @auth.logged_in?
   end
 
@@ -23,7 +23,7 @@ class PageFinder
   def get_nbe_page_id_from_obe_uri(obe_uri_in, obe_id)
     obe_uri = URI(obe_uri_in)
     obe_uri_api = "https://#{obe_uri.host}/api/migrations/#{obe_id}"
-    @log.info("Querying: #{obe_uri_api} for a New UX Id")
+    @log.debug("Querying: #{obe_uri_api} for a New UX Id")
 
     new_ux_id = get_nbe_id_from_obe_domain(obe_uri_api)
 
@@ -34,7 +34,7 @@ class PageFinder
       new_page = "https://#{obe_uri.host}/view/#{new_ux_id}"
 
       begin
-        @log.info("Querying: #{new_page} for the contents of the New UX page")
+        @log.debug("Querying: #{new_page} for the contents of the New UX page")
         response = http_get_response(new_page)
         @log.info("Page: #{new_page} found.")
         new_page
@@ -53,7 +53,7 @@ class PageFinder
     response = http_get_response(uri)
     parsed = response.parsed_response
 
-    @log.info("New UX Id: #{parsed["nbeId"]}")
+    @log.debug("New UX Id: #{parsed["nbeId"]}")
 
     if parsed["nbeId"].nil? || parsed["nbeId"].empty?
     else
@@ -81,7 +81,7 @@ class PageFinder
   end
 
   def http_get_response(uri)
-    @log.info("Auth: #{@auth.cookie}\nCalling: #{uri.to_s}")
+    @log.debug("Auth: #{@auth.cookie}\nCalling: #{uri.to_s}")
     response = HTTParty.get(uri, headers: {'Cookie' => @auth.cookie})
   end
 end

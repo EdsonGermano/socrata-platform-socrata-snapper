@@ -12,10 +12,11 @@ class Snapper
   @sites
 
   # initialize the class
-  def initialize(_sites=[])
+  def initialize(_sites=[], verbose=false)
     @sites = _sites
-    @log = Utils::Log.new(true, true)
-    @log.info("Sites length: #{@sites.length}")
+    verbosity = verbose ? Logger::DEBUG : Logger::INFO
+    @log = Utils::Log.new(true, true, verbosity)
+    @log.debug("Sites length: #{@sites.length}")
   end
 
   # snap shot a site
@@ -112,7 +113,7 @@ class Snapper
     @log.info("Report: #{@sites[0].log_dir}/snap_comparison.html")
 
     if result == true
-      @log.info("The sites are the same")
+      @log.debug("The sites are the same")
       return result #pass
     else
       @log.warn("The sites are not the same")

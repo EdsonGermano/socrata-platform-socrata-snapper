@@ -13,11 +13,10 @@ class Site
   BAD_RESULT  = "res/not_awesome.png"
 
   # Initialize the Site object.
-  def initialize(_domain, _4x4, _user, _password, _routes="", _override=false)
+  def initialize(_domain, _4x4, _user, _password, _routes="", _override=false, _verbose=false)
 
-    @log = Utils::Log.new(true, true)
-
-
+    verbosity = _verbose ? Logger::DEBUG : Logger::INFO
+    @log = Utils::Log.new(true, true, verbosity)
 
     @domain       = _domain
     @driver       = Utils::WebBrowser.new(false)
@@ -43,7 +42,7 @@ class Site
 
   # build the site comparison report.
   def build_report(site_2)
-    @log.info("Building HTML report")
+    @log.debug("Building HTML report")
 
     snap_files.each do |key, value|
       site1_file = value
@@ -69,7 +68,7 @@ class Site
     end
 
     if(!@processing_messages.nil?)
-      @log.info("Processing message count: #{@processing_messages.count}")
+      @log.debug("Processing message count: #{@processing_messages.count}")
       @body_messages << "<tr>"
 
       processing_messages.each { |key, value|
@@ -129,12 +128,12 @@ class Site
     if !@user.nil? && !@password.nil?
       sign_in
     else
-      @log.info("Not logging in. No Username or Password provided")
+      @log.debug("Not logging in. No Username or Password provided")
     end
 
     # visit each route, taking snapshots
     if @routes.nil? || @routes.empty?
-      @log.info("No routes defined for naviation")
+      @log.debug("No routes defined for naviation")
     else
       @routes.each do |route|
         navigate_to(route)
@@ -187,7 +186,7 @@ class Site
       @snap_files.each do |key, element|
         elements = element.split('.')
         if png.include?(elements[0]) && png.include?("baseline")
-          @log.info("Baseline found >> #{png}")
+          @log.debug("Baseline found >> #{png}")
           baseline_files << png
           if !compare_snapshots(@domain, "#{@log_dir}/#{element}", png)
             mismatches = mismatches + 1
@@ -213,34 +212,10 @@ class Site
   # sign in to the login page for a domain
   def sign_in
     begin
-      @log.info("Signing in")
+      @log.debug("Signing in")
       @current_url = "https://#{@domain}/login"
-      @driver.browser.navigate.to(@current_url)
-      @driver.browser.manage.window.resize_to(1600, 1200)
-      check_for_javascript_errors
-      @log.info("Done looking for javascript errors")
-      snap("sign_in", @_4x4)
-
-      @log.info("Input user")
-      # enter user in username field
-      element = @driver.browser.find_element(:id, 'user_session_login')
-      element.clear
-      element.send_keys(@user)
-
-      @log.info("Input password")
-      # enter password
-      element = @driver.browser.find_element(:id, 'user_session_password')
-      element.clear
-      element.send_keys(@password)
-
-      @log.info("Click commit")
-      # click submit button
-      element = @driver.browser.find_element(:name, 'commit')
-      element.click
-      sleep(@wait)
-      check_for_javascript_errors
-      @current_url = @driver.browser.current_url
-      @log.info("Now On #{@driver.browser.current_url}")
+      navigate_to_sigin_in
+      generic_sign_in
       snap("dataset", @_4x4)
     rescue => why
       @log.error("Unable to complete operation. Message: #{why.message}")
@@ -252,46 +227,54 @@ class Site
   # sign in to a datalens page
   def sign_in_data_lens
     begin
-      @log.info("Browsing to DataLens")
+      @log.debug("Browsing to DataLens")
       @current_url = @domain.include?("http") ? "#{@domain}" : "https://#{@domain}"
-      @driver.browser.navigate.to(@current_url)
-      @driver.browser.manage.window.resize_to(1600, 1200)
-      check_for_javascript_errors
-      @log.info("Done looking for javascript errors")
-      @log.info("Logging into DataLens")
-      snap("sign_in", @_4x4)
+      navigate_to_sigin_in
 
-      @log.info("Sign in")
-
+      # datalens specific UI
+      @log.debug("Sign in")
       element = @driver.browser.find_element(:link, 'Sign In')
       element.click
 
-      # enter user in username field
-      @log.info("Input username")
-      element = @driver.browser.find_element(:id, 'user_session_login')
-      element.clear
-      element.send_keys(@user)
-
-      @log.info("Input password")
-      # enter password
-      element = @driver.browser.find_element(:id, 'user_session_password')
-      element.clear
-      element.send_keys(@password)
-
-      @log.info("Click commit")
-      # click submit button
-      element = @driver.browser.find_element(:name, 'commit')
-      element.click
-      sleep(@wait)
-
-      @current_url = @driver.browser.current_url
-      @log.info("Now On #{@driver.browser.current_url}")
+      generic_sign_in
       snap("view", @_4x4)
     rescue => why
       @log.error("Unable to complete operation. Message: #{why.message}")
       @log.error("Operation terminated")
       snap("view", @_4x4)
     end
+  end
+
+  def navigate_to_sign_in
+    @driver.browser.navigate.to(@current_url)
+    @driver.browser.manage.window.resize_to(1600, 1200)
+    check_for_javascript_errors
+    @log.debug("Done looking for javascript errors")
+    @log.debug("Logging into DataLens")
+    snap("sign_in", @_4x4)
+  end
+
+  def generic_sign_in
+    # enter user in username field
+    @log.info("Input username")
+    element = @driver.browser.find_element(:id, 'user_session_login')
+    element.clear
+    element.send_keys(@user)
+
+    @log.info("Input password")
+    # enter password
+    element = @driver.browser.find_element(:id, 'user_session_password')
+    element.clear
+    element.send_keys(@password)
+
+    @log.info("Click commit")
+    # click submit button
+    element = @driver.browser.find_element(:name, 'commit')
+    element.click
+    sleep(@wait)
+
+    @current_url = @driver.browser.current_url
+    @log.debug("Now On #{@driver.browser.current_url}")
   end
 
   # snap an image from a website and write it locally
@@ -320,7 +303,7 @@ class Site
     snap_files[route] = snap_file
 
     @log.info("Snap finished. File written: #{snap_files[route]} snap_file count: #{@snap_files.length}")
-    @log.info("Baseline request? #{@baseline_snapshot}")
+    @log.debug("Baseline request? #{@baseline_snapshot}")
 
     if @baseline_snapshot
       set_baseline_image(snap_files[route])
@@ -387,7 +370,7 @@ class Site
     end
 
     FileUtils.cp("#{@log_dir}/#{image}", baseline_img_path)
-    @log.info("Renamed file: #{Dir.pwd}/#{@log_dir}/#{image} to: #{baseline_img_path}")
+    @log.debug("Renamed file: #{Dir.pwd}/#{@log_dir}/#{image} to: #{baseline_img_path}")
   end
 
   # check a page for javascript errors

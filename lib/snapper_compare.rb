@@ -7,9 +7,10 @@ include ChunkyPNG::Color
 class ImageComparison
   attr_accessor :images, :log, :diff_img, :max_width, :max_height
 
-  def initialize(route, image1, image2, log_dir="logs")
+  def initialize(route, image1, image2, verbose=false, log_dir="logs")
     @log_dir = log_dir
-    @log = Utils::Log.new(true, true)
+    verbosity = verbose ? Logger::DEBUG : Logger::INFO
+    @log = Utils::Log.new(true, true, verbosity)
 
     route  = route.nil? ? "unknown" : route
     @diff_img = "#{@log_dir}/#{route}_diff.png"
@@ -45,8 +46,8 @@ class ImageComparison
     @max_width = @images.first.width > @images.last.width ? @images.first.width : @images.last.width
     @max_height = @images.first.height > @images.last.height ? @images.first.height : @images.last.height
 
-    @log.info("Image 1: #{@images.first.width} X #{@images.first.height} Pixels: #{@images.first.pixels.length}")
-    @log.info("Image 2: #{@images.last.width} X #{@images.last.height} Pixels: #{@images.last.pixels.length}")
+    @log.debug("Image 1: #{@images.first.width} X #{@images.first.height} Pixels: #{@images.first.pixels.length}")
+    @log.debug("Image 2: #{@images.last.width} X #{@images.last.height} Pixels: #{@images.last.pixels.length}")
     return images_match
   end
 
@@ -62,11 +63,11 @@ class ImageComparison
 
     percentage_change = (diff.length.to_f / @images.first.pixels.length.to_f) * 100
 
-    @log.info('##########################')
-    @log.info("Pixels (Total):     #{@images.first.pixels.length}")
-    @log.info("Pixels changed      #{diff.length}")
-    @log.info("Pixels changed (%): #{percentage_change}%")
-    @log.info('##########################')
+    @log.debug('##########################')
+    @log.debug("Pixels (Total):     #{@images.first.pixels.length}")
+    @log.debug("Pixels changed      #{diff.length}")
+    @log.debug("Pixels changed (%): #{percentage_change}%")
+    @log.debug('##########################')
 
     x, y = diff.map{ |xy| xy[0] }, diff.map{ |xy| xy[1] }
 
@@ -110,16 +111,15 @@ class ImageComparison
     percentage_change = (pixel_diff_count.to_f / @images.first.pixels.length.to_f) * 100
 
     puts('##########################')
-    @log.info("Pixels (Total):     #{@images.first.pixels.length}")
-    @log.info("Pixels changed:     #{pixel_diff_count}")
-    @log.info("Image changed (%):  #{percentage_change}%")
+    @log.debug("Pixels (Total):     #{@images.first.pixels.length}")
+    @log.debug("Pixels changed:     #{pixel_diff_count}")
+    @log.debug("Image changed (%):  #{percentage_change}%")
     puts('##########################')
-
-    @log.info("Writing diff file: #{@diff_img}")
-    output_temp.save("#{@diff_img}")
 
     if diff.length > 0
       @log.warn("Images differ")
+      @log.info("Writing diff file: #{@diff_img}")
+      output_temp.save("#{@diff_img}")
       return 0 #images differ
     else
       @log.info("Images are identical")

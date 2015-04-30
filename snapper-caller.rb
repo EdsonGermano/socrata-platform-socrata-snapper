@@ -5,7 +5,6 @@ require_relative 'lib/site'
 require_relative 'lib/utils'
 
 options = {}
-log = Utils::Log.new(true, true)
 
 OptionParser.new do |opts|
   opts.banner = "Usage: <script.rb> [options]"
@@ -14,13 +13,13 @@ OptionParser.new do |opts|
     options[:mode] = mode
   end
 
-  opts.on('-s', '--site1 SITE_1#4x4', 'The site to get snaps from') do |site_1|
+  opts.on('--site1 SITE_1#4x4', 'The site to get snaps from') do |site_1|
     elements = site_1.split("#", 2)
     options[:site_1]  = elements[0]
     options[:_4x4_1]  = elements[1]
   end
 
-  opts.on('-d', '--site2 SITE_2#4x4', 'The second site to get snaps fromm') do |site_2|
+  opts.on('--site2 SITE_2#4x4', 'The second site to get snaps fromm') do |site_2|
     elements = site_2.split("#", 2)
     options[:site_2]  = elements[0]
     options[:_4x4_2]  = elements[1]
@@ -53,43 +52,51 @@ OptionParser.new do |opts|
     options[:csv_file] = csv_file
   end
 
+  opts.on('-v', '--verbose', 'Turn on verbose logging') do |verbose|
+    options[:verbose] = true
+  end
+
   opts.on('-h', '--help', 'Display Help') do
     puts(opts)
     exit
   end
 end.parse!
 
+verbosity = options[:verbose] ? Logger::DEBUG : Logger::INFO
+log = Utils::Log.new(true, true, verbosity)
+
 siteArray ||= []
 
 if options[:mode] == 'snap'
-  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route])
+  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route], options[:override], options[:verbose])
 
   if !options[:override].nil?
-    log.info("page: #{options[:site_1]}")
+    log.debug("page: #{options[:site_1]}")
     siteArray[0].current_url = options[:site_1]
   end
 
-  snapper = Snapper.new(siteArray)
+  snapper = Snapper.new(siteArray, options[:verbose])
+
   snapper.snap_shot
 
 elsif options[:mode] == 'diff'
-  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:routes])
-  siteArray << Site.new(options[:site_2], options[:_4x4_2], options[:user], options[:password], options[:routes])
-  snapper = Snapper.new(siteArray)
+  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:routes], options[:override], options[:verbose])
+  siteArray << Site.new(options[:site_2], options[:_4x4_2], options[:user], options[:password], options[:routes], options[:override], options[:verbose])
+  snapper = Snapper.new(siteArray, options[:verbose])
   snapper.process_sites
 elsif options[:mode] == 'compare_files_csv'
   if File.exists? options[:csv_file]
     CSV.foreach(options[:csv_file]) do |row|
-      log.info(row.to_s)
-      site_new = Site.new(options[:site_1], row[0].split('/').last, options[:user], options[:password], options[:route])
+      log.debug(row.to_s)
+      site_new = Site.new(options[:site_1], row[0].split('/').last, options[:user], options[:password], options[:route], options[:override], options[:verbose])
       site_new.current_url = row[0].to_s
       site_new.run_page_checks = false
       site_new.baseline_snapshot = row[1].to_s.strip == "true" ? true : false
       siteArray << site_new
-      log.info row[0].to_s << " " << siteArray.length
+      log.debug row[0].to_s << " " << siteArray.length
     end
 
-    snapper = Snapper.new(siteArray)
+    snapper = Snapper.new(siteArray, options[:verbose])
     if snapper.snap_shot > 0
       log.warn("Sites in CSV differ from baseline")
       1 # failure case for Jenkins
@@ -104,7 +111,7 @@ elsif options[:mode] == 'compare_files_csv'
 
 
 elsif options[:mode] = 'compare_files'
-  snapper = Snapper.new(siteArray)
+  snapper = Snapper.new(siteArray, options[:verbose])
   log.info("Comparing baseline: #{options[:baseline_img]} to candidate: #{options[:candidate_img]} from domain #{options[:domain]}")
   snapper.compare_snapshots(options[:domain], options[:baseline_img], options[:candidate_img])
 else
