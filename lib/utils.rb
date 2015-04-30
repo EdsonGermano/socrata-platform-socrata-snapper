@@ -14,7 +14,7 @@ module Utils
       @write_to_file = write_file
       @write_to_buffer_array = write_array
 #      @log_file =  Logger.new(write_log)
-      @log_file.info("Writing to log #{write_log}")
+#      @log_file.info("Writing to log #{write_log}")
     end
 
     def info(message)
