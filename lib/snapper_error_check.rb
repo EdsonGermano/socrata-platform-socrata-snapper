@@ -9,8 +9,9 @@ class ErrorCheck
   extend Utils
   attr_accessor :browser, :results
 
-  def initialize()
-    @log = Utils::Log.new(true, true)
+  def initialize(verbose=false)
+    verbosity = verbose ? Logger::DEBUG : Logger::INFO
+    @log = Utils::Log.new(true, true, verbosity)
   end
 
   # check if a page contains javascript errors.
@@ -46,7 +47,7 @@ class ErrorCheck
         end
         errors_found = 1
       else
-        @log.info("No errors detected on #{page}")
+        @log.debug("No errors detected on #{page}")
       end
     rescue => why
       @log.error("Error opening browser for page #{page}. Message #{why.message}")
@@ -75,7 +76,7 @@ class ErrorCheck
       response = HTTParty.get(uri)
 
       if response.header.to_s.include? 'HTTPOK'
-        @log.info("Valid response. OK")
+        @log.debug("Valid response. OK")
       else
         @log.error("Invalid response. #{response.header}")
         response_error = true

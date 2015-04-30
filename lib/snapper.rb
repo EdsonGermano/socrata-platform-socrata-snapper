@@ -1,4 +1,3 @@
-require 'fileutils'
 require 'nokogiri'
 require 'selenium-webdriver'
 require_relative 'snapper_compare'
@@ -27,7 +26,7 @@ class Snapper
     # else, run the comparison against the previous baseline and report
     @sites.each do |site|
       site.take_and_save_snapshot
-      if !site.baseline_snapshot
+      if !site.make_baseline_snapshot
         if site.matches_with_baseline?
           @log.info("Snap matches baseline")
         else

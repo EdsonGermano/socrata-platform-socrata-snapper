@@ -8,7 +8,7 @@ require_relative 'utils'
 
 # The site class which manages all interactions with a particular website
 class Site
-  attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages, :run_page_checks, :baseline_snapshot
+  attr_accessor :domain, :_4x4, :user, :password, :routes, :current_url, :data_lens, :processing_messages, :snap_files, :diff_files, :log_dir, :body_files, :body_messages, :run_page_checks, :make_baseline_snapshot
   GOOD_RESULT = "res/awesome.png"
   BAD_RESULT  = "res/not_awesome.png"
 
@@ -37,7 +37,7 @@ class Site
     @body_files   = ""
     @body_messages      = ""
     @run_page_checks    = true
-    @baseline_snapshot  = false
+    @make_baseline_snapshot  = false
   end
 
   # build the site comparison report.
@@ -284,7 +284,7 @@ class Site
     # give it x seconds for the page to load
     sleep(@wait)
 
-    FileUtils.mkdir_p(@log_dir) unless File.exists?(@log_dir)
+    File.mkdir(@log_dir) unless File.exists?(@log_dir)
 
     if route.nil? || route.empty?
       url = URI.escape(@current_url)
@@ -303,9 +303,9 @@ class Site
     snap_files[route] = snap_file
 
     @log.info("Snap finished. File written: #{snap_files[route]} snap_file count: #{@snap_files.length}")
-    @log.debug("Baseline request? #{@baseline_snapshot}")
+    @log.debug("Make new baseline requested? #{@make_baseline_snapshot}")
 
-    if @baseline_snapshot
+    if @make_baseline_snapshot
       set_baseline_image(snap_files[route])
     end
     return snap_files[route]
@@ -356,7 +356,7 @@ class Site
 
     archived_image = "#{Dir.pwd}/#{log_dir}/" << File.basename(image, ".png") << ".#{now.to_s}.png"
     @log.info("Archiving file #{image} to #{archived_image}")
-    FileUtils.mv(image, archived_image)
+    File.rename(image, archived_image)
   end
 
   # archive the old baseline and set a new one
@@ -369,7 +369,7 @@ class Site
       archive_image(baseline_img_path)
     end
 
-    FileUtils.cp("#{@log_dir}/#{image}", baseline_img_path)
+    File.rename("#{@log_dir}/#{image}", baseline_img_path)
     @log.debug("Renamed file: #{Dir.pwd}/#{@log_dir}/#{image} to: #{baseline_img_path}")
   end
 

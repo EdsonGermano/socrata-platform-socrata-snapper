@@ -2,7 +2,6 @@ source 'https://rubygems.org'
 
 gem 'chunky_png'
 gem 'colorize'
-gem 'fileutils'
 gem 'httparty'
 gem 'logger'
 gem 'json'

@@ -91,7 +91,7 @@ elsif options[:mode] == 'compare_files_csv'
       site_new = Site.new(options[:site_1], row[0].split('/').last, options[:user], options[:password], options[:route], options[:override], options[:verbose])
       site_new.current_url = row[0].to_s
       site_new.run_page_checks = false
-      site_new.baseline_snapshot = row[1].to_s.strip == "true" ? true : false
+      site_new.make_baseline_snapshot = row[1].to_s.strip == "true" ? true : false
       siteArray << site_new
       log.debug row[0].to_s << " " << siteArray.length
     end
