@@ -1,5 +1,5 @@
 require 'colorize'
-require 'logger'
+#require 'logger'
 require 'nokogiri'
 require 'selenium-webdriver'
 
@@ -13,7 +13,7 @@ module Utils
       @log_messages = Array.new
       @write_to_file = write_file
       @write_to_buffer_array = write_array
-      @log_file =  Logger.new(write_log)
+#      @log_file =  Logger.new(write_log)
       @log_file.info("Writing to log #{write_log}")
     end
 
@@ -23,7 +23,7 @@ module Utils
       end
 
       if @write_to_file
-        @log_file.info(message)
+#        @log_file.info(message)
       end
 
       puts("INFO: #{message}".green)
@@ -35,7 +35,7 @@ module Utils
       end
 
       if @write_to_file
-        @log_file.error(message)
+#        @log_file.error(message)
       end
 
       puts("ERROR: #{message}".red)
@@ -48,7 +48,7 @@ module Utils
       end
 
       if @write_to_file
-        @log_file.warn(message)
+#        @log_file.warn(message)
       end
 
       puts("WARN: #{message}".yellow)
