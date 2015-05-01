@@ -108,8 +108,8 @@ module Utils
       if http_proxy && https_proxy && no_proxy
           log.debug("Proxy settings present. adding proxy information to browser profile")
           proxy = Selenium::WebDriver::Proxy.new
-          proxy.http = HTTP_PROXY.split('://').last
-          proxy.ssl = HTTPS_PROXY.split('://').last
+          proxy.http = http_proxy.split('://').last
+          proxy.ssl = https_proxy.split('://').last
           proxy.no_proxy = no_proxy
           profile.proxy = proxy
       end
