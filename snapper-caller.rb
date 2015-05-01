@@ -1,5 +1,4 @@
-#require 'csv'
-#require 'optparse'
+require 'optparse'
 require_relative 'lib/snapper'
 require_relative 'lib/site'
 require_relative 'lib/utils'
@@ -105,7 +104,7 @@ elsif options[:mode] == 'compare_files_csv'
       0 # success case for Jenkins
     end
   else
-    log.error("File: #{optons[:csv_file]} not found.")
+    log.error("File: #{options[:csv_file]} not found.")
     1 # failure case for Jenkins
   end
 

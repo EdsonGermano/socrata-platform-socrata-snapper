@@ -95,10 +95,24 @@ module Utils
   class WebBrowser
     attr_accessor :browser, :extensions_loaded
 
+
     def initialize(add_extension=true, verbose=false)
+      http_proxy  = ENV['HTTP_PROXY']
+      https_proxy = ENV['HTTPS_PROXY']
+      no_proxy    = ENV['NO_PROXY']
+
       profile = Selenium::WebDriver::Firefox::Profile.new
       verbosity = verbose ? Logger::DEBUG : Logger::INFO
       log = Log.new(true, true, verbosity)
+
+      if http_proxy && https_proxy && no_proxy
+          log.debug("Proxy settings present. adding proxy information to browser profile")
+          proxy = Selenium::WebDriver::Proxy.new
+          proxy.http = HTTP_PROXY.split('://').last
+          proxy.ssl = HTTPS_PROXY.split('://').last
+          proxy.no_proxy = no_proxy
+          profile.proxy = proxy
+      end
 
       if add_extension
         begin
