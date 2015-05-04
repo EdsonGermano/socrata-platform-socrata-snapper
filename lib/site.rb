@@ -235,7 +235,6 @@ class Site
   def sign_in_data_lens
     begin
       @log.debug("Browsing to DataLens")
-      @current_url = @domain.include?("http") ? "#{@domain}" : "https://#{@domain}"
       navigate_to_sign_in
 
       # datalens specific UI
