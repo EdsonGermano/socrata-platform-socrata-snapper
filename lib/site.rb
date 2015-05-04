@@ -171,22 +171,18 @@ class Site
   end
 
   # check for baseline mismatches when doing delta comparisons
-  def matches_with_baseline?
-    get_baselines_for_site = 0
-  end
-
-  private
-
   # find all the baseline files that may exist in the log directory
-  def get_baselines_for_site
+  def matches_with_baseline?
     png_files = Dir.glob("#{@log_dir}/*.baseline.png")
     mismatches = 0
+    baseline_found = false
     baseline_files = []
     png_files.each do |png|
       @snap_files.each do |key, element|
         elements = element.split('.')
         if png.include?(elements[0]) && png.include?("baseline")
           @log.debug("Baseline found >> #{png}")
+          baseline_found = true
           baseline_files << png
           if !compare_snapshots(@domain, "#{@log_dir}/#{element}", png)
             mismatches = mismatches + 1
@@ -194,8 +190,19 @@ class Site
         end
       end
     end
-    mismatches
+
+    if !baseline_found
+      @log.info("No baseline file found")
+    end
+
+    if mismatches > 0
+      return true
+    else
+      return false
+    end
   end
+
+  private
 
   # run page and javascript checks and then snap picture
   def check_and_capture
@@ -214,7 +221,7 @@ class Site
     begin
       @log.debug("Signing in")
       @current_url = "https://#{@domain}/login"
-      navigate_to_sigin_in
+      navigate_to_sign_in
       generic_sign_in
       snap("dataset", @_4x4)
     rescue => why
@@ -229,7 +236,7 @@ class Site
     begin
       @log.debug("Browsing to DataLens")
       @current_url = @domain.include?("http") ? "#{@domain}" : "https://#{@domain}"
-      navigate_to_sigin_in
+      navigate_to_sign_in
 
       # datalens specific UI
       @log.debug("Sign in")

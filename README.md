@@ -36,7 +36,7 @@ $ example: ruby snapper-caller.rb -m snap --site1  https://data.cityofchicago.or
 *navigate directly to a DataLens page, authenticate and take a picture*
 ```bash
 $ ./snapper-caller.rb -m snap --site1 url -u [SOCRATA_USER] -p [SOCRATA_PASSWORD] -o
-$ example: ruby snapper-caller.rb -m snap --site1  https://dataspace.demo.socrata.com/view/8urc-6grh -o
+$ example: ruby snapper-caller.rb -m snap --site1  https://opendata-demo.rc-socrata.com/view/yajx-qcy7 -o
 ```
 
 #### Live Diffing -
@@ -60,8 +60,8 @@ $ example: ruby snapper-caller.rb -m diff --site1 opendata-demo.rc-socrata.com#6
 *given two *.png files, compare them and produce an output of their differences if the files are of the same size*
 
 ```bash
-$ ./snapper-caller.rb -m compare_files -c <domain>#<full_path_to_png_1>#<full_path_to_png_2>
-$ example: ruby snapper-caller.rb -m compare_files -c opdatata-demo.rc-socrata.com#/Users/joenunnelley/Developer/Socrata/socrata-snapper/logs/dataset_copy_6q4t-m6c7.png#/Users/joenunnelley/Developer/Socrata/socrata-snapper/logs/dataset_copy1_6q4t-m6c7.png
+$ ./snapper-caller.rb -m compare_files -c <comparison_tag>#<full_path_to_png_1>#<full_path_to_png_2>
+$ example: ruby snapper-caller.rb -m compare_files -c comparison_112#/Users/joenunnelley/Developer/Socrata/socrata-snapper/logs/dataset_copy_6q4t-m6c7.png#/Users/joenunnelley/Developer/Socrata/socrata-snapper/logs/dataset_copy1_6q4t-m6c7.png
 ```
 
 *given a csv file, compare the current site with a baseline*
@@ -72,4 +72,5 @@ $ example: ruby snapper-caller.rb -m compare_files_csv -f test_sites.csv
 $ note: the csv file format is as follows:
 $       https://dataspace.demo.socrata.com/view/e24t-fhrw, true
 $       [URL, baseline latest snapshot |true|false|]  
+$       setting baseline latest snapshot to true will force the creation of a new baseline for a site. setting it to false will do a comparison between current baseline and the png provided
 ```
