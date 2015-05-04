@@ -1,9 +1,9 @@
-require 'fileutils'
 require 'nokogiri'
 require 'selenium-webdriver'
 require_relative 'snapper_compare'
 require_relative 'snapper_error_check'
 require_relative 'snapper_page_finder'
+require_relative 'utils'
 
 # Class that drives the processing of commands to the library
 class Snapper
@@ -11,17 +11,34 @@ class Snapper
   @sites
 
   # initialize the class
-  def initialize(_sites=[])
+  def initialize(_sites=[], verbose=false)
     @sites = _sites
-    puts("sites length: #{@sites.length}")
+    verbosity = verbose ? Logger::DEBUG : Logger::INFO
+    @log = Utils::Log.new(true, true, verbosity)
+    @log.debug("Sites length: #{@sites.length}")
   end
 
   # snap shot a site
   def snap_shot
+    mismatches = 0
+
+    # take the snapshot. if we set the tool to re-baseline the site, do that and don't run a comparison
+    # else, run the comparison against the previous baseline and report
     @sites.each do |site|
-      puts("Snapshoting: #{site.current_url}")
-      site.take_and_archive_snapshot
+      site.take_and_save_snapshot
+      if !site.make_baseline_snapshot
+        if site.matches_with_baseline?
+          @log.info("Snap matches baseline")
+        else
+          @log.warn("Snap does not match baseline")
+          mismatches = mismatches + 1
+        end
+      else
+        @log.info("No baseline comparisons requested")
+      end
     end
+
+    mismatches
   end
 
   # run through the site list, processing them
@@ -32,14 +49,24 @@ class Snapper
 
     if @sites.length == 2
       if compare_sites
-        puts("Comparison of images showed a match")
-        return true
+        @log.info("Comparison of images showed a match")
+        return 0 # passing return code for Jenkins
       else
-        puts("Comparison of images showed a mismatch")
-        return false
+        @log.warn("Comparison of images showed a mismatch")
+        return 1 # failing return code for Jenkins
       end
     else
-      puts("Skipping snapshot comparison. Incorrect number of sites.")
+      @log.warn("Skipping snapshot comparison. Incorrect number of sites.")
+    end
+  end
+
+  # given two png files, compare them for size and graphical differences
+  def compare_snapshots(domain_name, baseline_img, candidate_img, log_dir="logs")
+    compare_pictures = ImageComparison.new(domain_name, baseline_img, candidate_img, log_dir)
+    if compare_pictures.image_dimensions_match?
+      compare_pictures.detailed_compare_images
+    else
+      return 1 #images differ. failing return code for Jenkins
     end
   end
 
@@ -82,13 +109,13 @@ class Snapper
       f1.puts(doc)
     end
 
-    puts("report: #{@sites[0].log_dir}/snap_comparison.html")
+    @log.info("Report: #{@sites[0].log_dir}/snap_comparison.html")
 
     if result == true
-      puts("the sites are the same")
+      @log.debug("The sites are the same")
       return result #pass
     else
-      puts("the sites are not the same")
+      @log.warn("The sites are not the same")
       return result #fail
     end
   end
