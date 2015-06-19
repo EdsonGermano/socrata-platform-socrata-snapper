@@ -45,7 +45,7 @@ $ example: ruby snapper-caller.rb -m snap --site1  https://opendata-demo.rc-socr
 **In diff mode the tool is expecting the OBE 4x4 and will find the NBE 4x4 on its own**
 ```bash
 $ ./snapper-caller.rb -m diff --site1 domain#OBE_4x4 --site2 domain#OBE_4x4
-$ example: ruby snapper-caller.rb -m diff --site1 data.cityofchicago.org#ijzp-q8t2 -d data.cityofchicago.org#ijzp-q8t2
+$ example: ruby snapper-caller.rb -m diff --site1 data.cityofchicago.org#ijzp-q8t2 -site2 data.cityofchicago.org#ijzp-q8t2
 ```
 
 *navigate to two sites, login, compare and produce a diff of them.*
@@ -53,7 +53,7 @@ $ example: ruby snapper-caller.rb -m diff --site1 data.cityofchicago.org#ijzp-q8
 **in diff mode the tool is expecting the OBE 4x4 and will find the NBE 4x4 on its own**
 ```bash
 $ ./snapper-caller.rb -m diff --site1  domain|OBE_4x4 --site2 domain#OBE_4x4 -u <username> -p <password>
-$ example: ruby snapper-caller.rb -m diff --site1 opendata-demo.rc-socrata.com#6q4t-m6c7 -d opendata-demo.rc-socrata.com#b5k5-ycfq -u [SOCRATA_USER] -p [SOCRATA_PASSWORD]
+$ example: ruby snapper-caller.rb -m diff --site1 opendata-demo.rc-socrata.com#6q4t-m6c7 --site2 opendata-demo.rc-socrata.com#b5k5-ycfq -u [SOCRATA_USER] -p [SOCRATA_PASSWORD]
 ```
 
 #### File Comparison -
