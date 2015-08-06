@@ -300,7 +300,7 @@ class Site
     end
 
     _4x4 = _4x4.nil? ? "override" : _4x4.strip
-    if @filename.nil?
+    if @filename.empty?
       png_name = route.gsub(".", "_")
       png_name = png_name.gsub("http://","").gsub("https://", "")
 
