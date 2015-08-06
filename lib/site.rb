@@ -13,7 +13,7 @@ class Site
   BAD_RESULT  = "res/not_awesome.png"
 
   # Initialize the Site object.
-  def initialize(_domain, _4x4, _user, _password, _routes="", _override=false, _verbose=false)
+  def initialize(_domain, _4x4, _user, _password, _routes='', _override=false, _verbose=false, _filename='')
 
     verbosity = _verbose ? Logger::DEBUG : Logger::INFO
     @log = Utils::Log.new(true, true, verbosity)
@@ -28,6 +28,7 @@ class Site
     @data_lens
     @log_dir      = "logs"
     @wait         = 5
+    @filename     = _filename
     #if you override you are planning to explicitly tell what URL to snap by assigning the full URL to this variable as an explicit assignment
     @current_url  = _override ? nil : "https://#{@domain}/d/#{@_4x4}"
     @processing_messages = []
@@ -299,11 +300,15 @@ class Site
     end
 
     _4x4 = _4x4.nil? ? "override" : _4x4.strip
-    png_name = route.gsub(".", "_")
-    png_name = png_name.gsub("http://","").gsub("https://", "")
+    if @filename.empty?
+      png_name = route.gsub(".", "_")
+      png_name = png_name.gsub("http://","").gsub("https://", "")
 
-    snap_file = "#{png_name}_#{_4x4}.png"
-    snap_file = snap_file.gsub('/', '_')
+      snap_file = "#{png_name}_#{_4x4}.png"
+      snap_file = snap_file.gsub('/', '_')
+    else
+      snap_file = @filename
+    end
 
     @driver.browser.save_screenshot("#{@log_dir}/#{snap_file}")
     snap_files[route] = snap_file

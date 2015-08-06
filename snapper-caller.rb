@@ -51,6 +51,10 @@ OptionParser.new do |opts|
     options[:csv_file] = csv_file
   end
 
+  opts.on('--output-filename FILENAME', 'When snapping a file, this specifies the resulting filename') do |filename|
+    options[:filename] = filename
+  end
+
   opts.on('-v', '--verbose', 'Turn on verbose logging') do |verbose|
     options[:verbose] = true
   end
@@ -67,7 +71,7 @@ log = Utils::Log.new(true, true, verbosity)
 siteArray ||= []
 
 if options[:mode] == 'snap'
-  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route], options[:override], options[:verbose])
+  siteArray << Site.new(options[:site_1], options[:_4x4_1], options[:user], options[:password], options[:route], options[:override], options[:verbose], options[:filename])
 
   if !options[:override].nil?
     log.debug("page: #{options[:site_1]}")
